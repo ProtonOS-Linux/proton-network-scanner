@@ -1,11 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.3.1 — 2026-11-03
 
 ### New
 - **Shows up in KDE Discover**: the package now includes AppStream metadata
   (`/usr/share/metainfo/org.protonos.ProtonIpScanner.metainfo.xml`), so Discover lists Proton IP Scanner with
   its icon, description and screenshots, and finds it in search. CI validates the file before every release.
+- **Flatpak** packaging for Flathub (`packaging/flatpak/`, see `docs/FLATPAK.md`), so the app can be installed
+  from Discover or GNOME Software on most Linux distributions. CI builds it the way Flathub does and lints it.
 
 ## 1.3.0 — 2026-11-03
 

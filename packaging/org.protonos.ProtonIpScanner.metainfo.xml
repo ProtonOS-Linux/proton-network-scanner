@@ -92,6 +92,11 @@
     <binary>proton-ip-scanner</binary>
   </provides>
   <releases>
+    <release version="1.3.1" date="2026-11-03">
+      <description>
+        <p>Available as a Flatpak, and listed in KDE Discover and other app stores.</p>
+      </description>
+    </release>
     <release version="1.3.0" date="2026-11-03">
       <description>
         <p>Windows installer, an Update CVE database button and automatic CVE database updates when the app opens. The Linux package now installs on Debian 11+ and Ubuntu 20.04+.</p>

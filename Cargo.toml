@@ -1,6 +1,6 @@
 [package]
 name = "proton-ip-scanner"
-version = "1.3.0"
+version = "1.3.1"
 edition = "2024"
 rust-version = "1.95"
 description = "Fast, friendly network and vulnerability scanner: devices, MAC addresses, names, open ports, CVEs (CVSS v4, EPSS) and reports."
