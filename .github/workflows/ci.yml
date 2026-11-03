@@ -121,6 +121,11 @@ jobs:
         run: |
           flatpak install --user -y --noninteractive ./proton-ip-scanner.flatpak
           dbus-run-session flatpak run org.protonos.ProtonIpScanner --help
+          # Unprivileged ping depends on the kernel setting below (it must include the user's
+          # group). Shown outside and inside the sandbox so a ping fallback is easy to explain.
+          echo "ping_group_range outside: $(cat /proc/sys/net/ipv4/ping_group_range), id: $(id -g)"
+          dbus-run-session flatpak run --command=sh org.protonos.ProtonIpScanner -c \
+            'echo "ping_group_range inside: $(cat /proc/sys/net/ipv4/ping_group_range), id: $(id -g)"'
           # A real scan of this runner's own address, inside the sandbox.
           dbus-run-session flatpak run org.protonos.ProtonIpScanner --scan 127.0.0.1 --ports 22,80 --csv
       - uses: actions/upload-artifact@v4
