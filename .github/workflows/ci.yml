@@ -1,6 +1,8 @@
-# Tests every push and pull request on Linux and Windows. When a version tag
-# (v1.3.0, …) is pushed, it also builds the release files and attaches them to a
-# GitHub release:
+# Tests every push and pull request on Linux and Windows.
+#
+# Releasing: bump `version` in Cargo.toml and push to main. When main has a
+# version that has no GitHub release yet (or a v* tag is pushed), this workflow
+# builds the release files, creates the tag v<version> and publishes the release:
 #
 #   proton-ip-scanner_<version>-1_amd64.deb          Debian/Ubuntu package (glibc 2.30+)
 #   proton-ip-scanner-<version>-linux-x86_64.tar.gz  plain Linux binary
@@ -51,9 +53,34 @@ jobs:
       - run: cargo install cargo-audit --locked
       - run: cargo audit --deny warnings
 
+  # Decides whether this run publishes a release.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      release: ${{ steps.v.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          v=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          release=false
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            release=true
+          elif [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_NAME" = main ] \
+               && ! gh release view "v$v" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            release=true   # new version on main without a release yet
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "Version $v, release: $release"
+
   linux:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [test, audit]
+    if: needs.version.outputs.release == 'true'
+    needs: [test, audit, version]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -80,8 +107,8 @@ jobs:
           path: out/*
 
   windows:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [test, audit]
+    if: needs.version.outputs.release == 'true'
+    needs: [test, audit, version]
     runs-on: windows-latest
     env:
       # Secrets cannot be used in `if:` directly; expose only whether one exists.
@@ -125,12 +152,13 @@ jobs:
           path: out/*
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux, windows]
+    if: needs.version.outputs.release == 'true'
+    needs: [linux, windows, version]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: out
@@ -141,9 +169,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="${GITHUB_REF_NAME}"
+          tag="v${{ needs.version.outputs.version }}"
           if gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$tag" out/* --clobber -R "$GITHUB_REPOSITORY"
           else
-            gh release create "$tag" out/* -R "$GITHUB_REPOSITORY" --title "Proton IP Scanner ${tag#v}" --generate-notes
+            # Notes: this version's section of CHANGELOG.md, plus install help.
+            awk -v v="${tag#v}" '$0 ~ "^## " v {f=1; next} /^## / && f {exit} f' "$GITHUB_WORKSPACE/CHANGELOG.md" > notes.md || true
+            cat "$GITHUB_WORKSPACE/.github/release-notes-footer.md" >> notes.md
+            gh release create "$tag" out/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "Proton IP Scanner ${tag#v}" --notes-file notes.md
           fi
