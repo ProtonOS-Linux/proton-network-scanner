@@ -61,7 +61,13 @@
   </screenshots>
   <!-- Links this page to the menu entry, so Discover's "Launch" button works -->
   <launchable type="desktop-id">org.protonos.ProtonIpScanner.desktop</launchable>
-  <icon type="stock">proton-ip-scanner</icon>
+  <!-- Banner colors on flathub.org and in app stores (from the app icon's magenta) -->
+  <branding>
+    <color type="primary" scheme_preference="light">#f7c6e0</color>
+    <color type="primary" scheme_preference="dark">#8e106a</color>
+  </branding>
+  <!-- No <icon> here on purpose: stores take it from the .desktop file's Icon= line, which
+       the Flatpak build renames to the app ID as Flathub requires. -->
   <categories>
     <category>Network</category>
     <category>Monitor</category>
