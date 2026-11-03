@@ -127,25 +127,45 @@ jobs:
           [IO.File]::WriteAllBytes("cert.pfx", [Convert]::FromBase64String($env:WINDOWS_CERT_PFX))
           $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -Last 1
           & $signtool.FullName sign /f cert.pfx /p $env:WINDOWS_CERT_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 target\release\proton-ip-scanner.exe
-      - name: Installer
-        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: target/release/proton-ip-scanner.exe
+
+  # The installer is built on Linux: Debian's NSIS includes the 64-bit
+  # installer stubs (the Windows NSIS package does not).
+  installer:
+    needs: [windows, version]
+    runs-on: ubuntu-latest
+    env:
+      HAS_CERT: ${{ secrets.WINDOWS_CERT_PFX != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-exe
+          path: exe
+      - name: Build the installer
         run: |
-          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) { choco install nsis -y --no-progress; $env:Path += ";C:\Program Files (x86)\NSIS" }
-          $v = (cargo metadata --no-deps --format-version 1 | ConvertFrom-Json).packages[0].version
-          New-Item -ItemType Directory -Force out | Out-Null
-          Push-Location packaging\windows
-          makensis /DVERSION=$v /DEXE=..\..\target\release\proton-ip-scanner.exe /DOUTDIR=..\..\out installer.nsi
-          Pop-Location
-          Copy-Item target\release\proton-ip-scanner.exe "out\proton-ip-scanner-$v-windows-portable.exe"
+          set -eu
+          sudo apt-get update -qq && sudo apt-get install -y -qq nsis osslsigncode
+          v="${{ needs.version.outputs.version }}"
+          mkdir -p out
+          (cd packaging/windows && makensis -V2 -DVERSION="$v" -DEXE="$GITHUB_WORKSPACE/exe/proton-ip-scanner.exe" -DOUTDIR="$GITHUB_WORKSPACE/out" installer.nsi)
+          cp exe/proton-ip-scanner.exe "out/proton-ip-scanner-$v-windows-portable.exe"
       - name: Sign the installer (optional)
         if: env.HAS_CERT == 'true'
         env:
           WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
           WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
-        shell: pwsh
         run: |
-          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -Last 1
-          Get-ChildItem out\*Setup.exe | ForEach-Object { & $signtool.FullName sign /f cert.pfx /p $env:WINDOWS_CERT_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $_.FullName }
+          set -eu
+          echo "$WINDOWS_CERT_PFX" | base64 -d > cert.pfx
+          for f in out/*Setup.exe; do
+            osslsigncode sign -pkcs12 cert.pfx -pass "$WINDOWS_CERT_PASSWORD" -h sha256 \
+              -t http://timestamp.digicert.com -in "$f" -out "$f.signed" && mv "$f.signed" "$f"
+          done
+          rm -f cert.pfx
       - uses: actions/upload-artifact@v4
         with:
           name: windows
@@ -153,7 +173,7 @@ jobs:
 
   release:
     if: needs.version.outputs.release == 'true'
-    needs: [linux, windows, version]
+    needs: [linux, installer, version]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -162,6 +182,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: out
+          pattern: "{linux,windows}"
           merge-multiple: true
       - name: Checksums
         run: cd out && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
