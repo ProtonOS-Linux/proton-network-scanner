@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### New
+- **Shows up in KDE Discover**: the package now includes AppStream metadata
+  (`/usr/share/metainfo/org.protonos.ProtonIpScanner.metainfo.xml`), so Discover lists Proton IP Scanner with
+  its icon, description and screenshots, and finds it in search. CI validates the file before every release.
+
 ## 1.3.0 — 2026-11-03
 
 ### New

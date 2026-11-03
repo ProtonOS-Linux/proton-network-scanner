@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AppStream metadata for Proton IP Scanner.
+
+  This file is what makes KDE Discover (and GNOME Software) treat the proton-ip-scanner
+  package as an application with its own store page, instead of hiding it as a plain
+  system package. It is installed to /usr/share/metainfo/ by cargo-deb (see Cargo.toml),
+  and the Proton OS APT repository turns it into DEP-11 data so Discover can also find the
+  app before it is installed.
+
+  Rules worth knowing when editing:
+  * <id> must equal the .desktop file name without ".desktop" (packaging/).
+  * Screenshot URLs must be public HTTPS; Discover downloads them when the page is opened.
+  * Add a <release> line at the top of <releases> for every new version (newest first).
+  * Check with appstreamcli validate (CI does this on every build).
+-->
+<component type="desktop-application">
+  <id>org.protonos.ProtonIpScanner</id>
+  <!-- License of this metadata file (CC0: anyone may reuse it) and of the app itself -->
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Proton IP Scanner</name>
+  <summary>Find the devices on your network and check them for known vulnerabilities</summary>
+  <description>
+    <p>
+      Proton IP Scanner finds every device on your network — computers, phones, printers, TVs,
+      smart plugs — and shows their IP address, MAC address, manufacturer, name and open ports.
+      It can then check their services for known vulnerabilities and export a report.
+    </p>
+    <ul>
+      <li>One-click scan of your own network, with the most common ports checked on every device</li>
+      <li>Device names from router DNS, NetBIOS, mDNS, LLMNR and UPnP; manufacturers from the IEEE registries</li>
+      <li>Ping test with live latency chart, packet loss, jitter and a plain-language verdict</li>
+      <li>Vulnerability assessment: service detection, known CVEs from NIST NVD ranked by CVSS v4, EPSS, CISA KEV and a priority rating</li>
+      <li>Offline CVE database for networks without internet</li>
+      <li>Excel and PDF reports, CSV and HTML device lists, light and dark theme</li>
+      <li>Never needs root or administrator rights</li>
+    </ul>
+    <p>Only scan networks you own or have permission to scan.</p>
+  </description>
+  <url type="homepage">https://www.protonos.org</url>
+  <url type="bugtracker">https://github.com/ProtonOS-Linux/proton-network-scanner/issues</url>
+  <url type="vcs-browser">https://github.com/ProtonOS-Linux/proton-network-scanner</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Devices on the network with their details</caption>
+      <image type="source" width="1180" height="720">https://raw.githubusercontent.com/ProtonOS-Linux/proton-network-scanner/main/docs/screenshot-dark.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Vulnerability assessment with the Top 10 by priority</caption>
+      <image type="source" width="1180" height="720">https://raw.githubusercontent.com/ProtonOS-Linux/proton-network-scanner/main/docs/screenshot-vuln.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Ping test</caption>
+      <image type="source" width="1180" height="720">https://raw.githubusercontent.com/ProtonOS-Linux/proton-network-scanner/main/docs/screenshot-ping.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Light theme</caption>
+      <image type="source" width="1180" height="720">https://raw.githubusercontent.com/ProtonOS-Linux/proton-network-scanner/main/docs/screenshot-light.png</image>
+    </screenshot>
+  </screenshots>
+  <!-- Links this page to the menu entry, so Discover's "Launch" button works -->
+  <launchable type="desktop-id">org.protonos.ProtonIpScanner.desktop</launchable>
+  <icon type="stock">proton-ip-scanner</icon>
+  <categories>
+    <category>Network</category>
+    <category>Monitor</category>
+  </categories>
+  <keywords>
+    <keyword>network</keyword>
+    <keyword>scanner</keyword>
+    <keyword>ip</keyword>
+    <keyword>port</keyword>
+    <keyword>vulnerability</keyword>
+    <keyword>cve</keyword>
+  </keywords>
+  <developer id="org.protonos">
+    <name>Proton OS</name>
+  </developer>
+  <update_contact>support@protonos.org</update_contact>
+  <!-- The Debian package that contains this app (lets Discover install it from the APT repo) -->
+  <pkgname>proton-ip-scanner</pkgname>
+  <!-- Age rating: no entries means suitable for everyone -->
+  <content_rating type="oars-1.1"/>
+  <provides>
+    <binary>proton-ip-scanner</binary>
+  </provides>
+  <releases>
+    <release version="1.3.0" date="2026-11-03">
+      <description>
+        <p>Windows installer, an Update CVE database button and automatic CVE database updates when the app opens. The Linux package now installs on Debian 11+ and Ubuntu 20.04+.</p>
+      </description>
+    </release>
+    <release version="1.2.0" date="2026-11-03">
+      <description>
+        <p>Offline vulnerability database for networks without internet, Comprehensive and Full port lists, and more device names from router DNS and UPnP.</p>
+      </description>
+    </release>
+    <release version="1.1.0" date="2026-11-02">
+      <description>
+        <p>New Vulnerability Scanner tab with CVE lookups, Excel and PDF reports, a ping test and mDNS/LLMNR names.</p>
+      </description>
+    </release>
+    <release version="1.0.0" date="2026-10-31"/>
+  </releases>
+</component>

@@ -65,6 +65,8 @@ assets = [
     ["target/release/proton-ip-scanner", "usr/bin/", "755"],
     ["packaging/org.protonos.ProtonIpScanner.desktop", "usr/share/applications/", "644"],
     ["assets/proton-ip-scanner.svg", "usr/share/icons/hicolor/scalable/apps/", "644"],
+    # AppStream metadata: makes the app appear in KDE Discover / GNOME Software.
+    ["packaging/org.protonos.ProtonIpScanner.metainfo.xml", "usr/share/metainfo/", "644"],
     ["README.md", "usr/share/doc/proton-ip-scanner/README.md", "644"],
     ["docs/SECURITY-REVIEW.md", "usr/share/doc/proton-ip-scanner/SECURITY-REVIEW.md", "644"],
     ["data/oui-data-LICENSE.txt", "usr/share/doc/proton-ip-scanner/oui-data-LICENSE.txt", "644"],
