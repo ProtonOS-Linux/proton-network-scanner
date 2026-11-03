@@ -100,12 +100,14 @@ jobs:
           src = open("packaging/flatpak/org.protonos.ProtonIpScanner.yml").read()
           git = re.compile(r"      - type: git\n(        .*\n)+")
           assert git.search(src), "git source not found in the manifest"
-          out = git.sub("      - type: dir\n        path: ../..\n", src, count=1)
-          open("packaging/flatpak/ci.yml", "w").write(out)
+          out = git.sub("      - type: dir\n        path: .\n", src, count=1)
+          # Sandboxed builds only read files below the manifest, so this copy sits at the top.
+          out = out.replace("      - cargo-sources.json\n", "      - packaging/flatpak/cargo-sources.json\n")
+          open("ci-flatpak.yml", "w").write(out)
           PY
           # dbus-run-session: the runner has no desktop session, which flatpak needs to install deps.
           dbus-run-session flatpak run org.flatpak.Builder --user --force-clean --sandbox --install-deps-from=flathub \
-            --repo=repo --default-branch=test builddir packaging/flatpak/ci.yml
+            --repo=repo --default-branch=test builddir ci-flatpak.yml
           flatpak build-bundle repo proton-ip-scanner.flatpak org.protonos.ProtonIpScanner test
       - name: Flathub linter
         run: |
