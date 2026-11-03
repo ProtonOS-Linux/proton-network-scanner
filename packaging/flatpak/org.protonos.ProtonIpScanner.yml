@@ -60,5 +60,5 @@ modules:
       - type: git
         url: https://github.com/ProtonOS-Linux/proton-network-scanner.git
         tag: v1.3.1
-        commit: COMMIT_OF_V1.3.1
+        commit: 0277e1941498ae3d58f946048688ffea82ae3a9c
       - cargo-sources.json
