@@ -106,7 +106,7 @@ jobs:
           open("ci-flatpak.yml", "w").write(out)
           PY
           # dbus-run-session: the runner has no desktop session, which flatpak needs to install deps.
-          dbus-run-session flatpak run org.flatpak.Builder --user --force-clean --sandbox --install-deps-from=flathub \
+          dbus-run-session flatpak run org.flatpak.Builder --user --force-clean --sandbox --disable-rofiles-fuse --install-deps-from=flathub \
             --repo=repo --default-branch=test builddir ci-flatpak.yml
           flatpak build-bundle repo proton-ip-scanner.flatpak org.protonos.ProtonIpScanner test
       - name: Flathub linter
