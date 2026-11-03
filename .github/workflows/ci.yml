@@ -88,7 +88,7 @@ jobs:
       - name: Install Flatpak and Flathub's builder
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends flatpak
+          sudo apt-get install -y --no-install-recommends flatpak dbus
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y --noninteractive flathub org.flatpak.Builder
       - name: Build from this commit
@@ -103,12 +103,13 @@ jobs:
           out = git.sub("      - type: dir\n        path: ../..\n", src, count=1)
           open("packaging/flatpak/ci.yml", "w").write(out)
           PY
-          flatpak run org.flatpak.Builder --user --force-clean --sandbox --install-deps-from=flathub \
+          # dbus-run-session: the runner has no desktop session, which flatpak needs to install deps.
+          dbus-run-session flatpak run org.flatpak.Builder --user --force-clean --sandbox --install-deps-from=flathub \
             --repo=repo --default-branch=test builddir packaging/flatpak/ci.yml
           flatpak build-bundle repo proton-ip-scanner.flatpak org.protonos.ProtonIpScanner test
       - name: Flathub linter
         run: |
-          lint() { flatpak run --command=flatpak-builder-lint org.flatpak.Builder "$@"; }
+          lint() { dbus-run-session flatpak run --command=flatpak-builder-lint org.flatpak.Builder "$@"; }
           lint manifest packaging/flatpak/org.protonos.ProtonIpScanner.yml
           lint appstream builddir/files/share/metainfo/org.protonos.ProtonIpScanner.metainfo.xml
           # The repo check also wants screenshots mirrored and the app published, which only
@@ -117,9 +118,9 @@ jobs:
       - name: Start in the sandbox
         run: |
           flatpak install --user -y --noninteractive ./proton-ip-scanner.flatpak
-          flatpak run org.protonos.ProtonIpScanner --help
+          dbus-run-session flatpak run org.protonos.ProtonIpScanner --help
           # A real scan of this runner's own address, inside the sandbox.
-          flatpak run org.protonos.ProtonIpScanner --scan 127.0.0.1 --ports 22,80 --csv
+          dbus-run-session flatpak run org.protonos.ProtonIpScanner --scan 127.0.0.1 --ports 22,80 --csv
       - uses: actions/upload-artifact@v4
         with:
           name: flatpak
