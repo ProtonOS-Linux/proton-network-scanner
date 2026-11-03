@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Proton IP Scanner
+GenericName=Network Scanner
+Comment=Find the devices on your network, their names, MAC addresses and open ports
+Exec=proton-ip-scanner
+Icon=proton-ip-scanner
+Terminal=false
+Categories=Network;Monitor;
+Keywords=ip;lan;network;scanner;port;mac;devices;
+StartupWMClass=org.protonos.ProtonIpScanner

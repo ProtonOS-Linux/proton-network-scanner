@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Proton IP Scanner icon: a radar sweep on a magenta tile. GPL-3.0-or-later. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dc2696"/>
+      <stop offset="1" stop-color="#8e106a"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#bg)"/>
+  <path d="M64 64 L64 14 A50 50 0 0 1 107 39 Z" fill="#ffffff" fill-opacity="0.28"/>
+  <g fill="none" stroke="#ffffff" stroke-width="4">
+    <circle cx="64" cy="64" r="18"/>
+    <circle cx="64" cy="64" r="34"/>
+    <circle cx="64" cy="64" r="50"/>
+  </g>
+  <circle cx="64" cy="64" r="7" fill="#ffffff"/>
+  <circle cx="86" cy="40" r="7" fill="#ffffff"/>
+</svg>

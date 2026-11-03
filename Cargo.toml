@@ -1,0 +1,71 @@
+[package]
+name = "proton-ip-scanner"
+version = "1.3.0"
+edition = "2024"
+rust-version = "1.95"
+description = "Fast, friendly network and vulnerability scanner: devices, MAC addresses, names, open ports, CVEs (CVSS v4, EPSS) and reports."
+license = "GPL-3.0-or-later"
+authors = ["Proton OS contributors <support@protonos.org>"]
+repository = "https://github.com/ProtonOS-Linux/proton-network-scanner"
+homepage = "https://www.protonos.org"
+keywords = ["network", "scanner", "vulnerability", "port-scanner", "cve"]
+categories = ["network-programming", "gui"]
+
+[dependencies]
+eframe = { version = "0.37", default-features = false, features = ["default_fonts", "glow", "wayland", "x11", "clipboard", "links"] }
+egui_extras = "0.37"
+# Monochrome icon/emoji glyphs (▶ ⚙ 💾 🔍 …) used on buttons.
+egui = { version = "0.37", default-features = false, features = ["monochrome_emoji_fonts"] }
+netdev = "0.47"
+socket2 = "0.6"
+dns-lookup = "4"
+dirs = "7"
+# HTTP(S) client: vulnerability database lookups (verified TLS, OS trust
+# store) and reading web-server headers of scanned devices.
+ureq = { version = "3.5", default-features = false, features = ["rustls", "gzip", "platform-verifier"] }
+# Parsing NVD / EPSS responses and the local lookup cache.
+serde_json = "1"
+# Compressing the offline vulnerability database (already used by ureq).
+flate2 = "1"
+# Excel (.xlsx) reports. Pure Rust, no Office needed.
+rust_xlsxwriter = { version = "0.102", default-features = false }
+
+[build-dependencies]
+# Embeds the icon, version info and manifest into the Windows .exe.
+winresource = "0.1"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_NetworkManagement_IpHelper", "Win32_Networking_WinSock", "Win32_System_Console"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# `cargo deb` → target/debian/proton-ip-scanner_<version>-1_amd64.deb
+[package.metadata.deb]
+maintainer = "Proton OS <support@protonos.org>"
+copyright = "2026, Proton OS contributors <support@protonos.org>"
+section = "net"
+priority = "optional"
+# The binary is built against glibc 2.30 (cargo zigbuild); the rest are loaded at run time
+# for the window (OpenGL, keyboard, X11). Works on Debian 11+, Ubuntu 20.04+.
+depends = "libc6 (>= 2.30), libgl1, libegl1, libxkbcommon0, libxkbcommon-x11-0, libx11-6, libxcursor1, libxrandr2, libxi6"
+recommends = "libwayland-client0, libwayland-egl1, libwayland-cursor0, proton-os-archive-keyring"
+extended-description = """\
+Proton IP Scanner finds the computers, phones, printers and other devices on \
+your local network and shows their IP address, MAC address, manufacturer, \
+DNS/NetBIOS/mDNS name and open TCP ports, runs ping tests, and assesses \
+services for known vulnerabilities (NVD CVEs with CVSS v4, FIRST EPSS, CISA \
+KEV) with Excel and PDF reports. It runs as a normal user: ping uses the \
+kernel's unprivileged ICMP sockets, with TCP and ARP as fallbacks."""
+assets = [
+    ["target/release/proton-ip-scanner", "usr/bin/", "755"],
+    ["packaging/org.protonos.ProtonIpScanner.desktop", "usr/share/applications/", "644"],
+    ["assets/proton-ip-scanner.svg", "usr/share/icons/hicolor/scalable/apps/", "644"],
+    ["README.md", "usr/share/doc/proton-ip-scanner/README.md", "644"],
+    ["docs/SECURITY-REVIEW.md", "usr/share/doc/proton-ip-scanner/SECURITY-REVIEW.md", "644"],
+    ["data/oui-data-LICENSE.txt", "usr/share/doc/proton-ip-scanner/oui-data-LICENSE.txt", "644"],
+]
