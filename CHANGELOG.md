@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.4.1 — 2026-11-04
+
+### Fixed
+- **False positives from approximate versions.** Nmap often knows only a product family (Samba: "4" or
+  "3.X - 4.X"; Apache with `ServerTokens Major`: "2"). Such a version was compared with NVD's version ranges as
+  if it were exact, and "4" is older than every patched 4.x release, so nearly every CVE of the product was
+  reported on fully patched servers. CVEs are now matched only for exact versions (at least `major.minor`, no
+  `X`, no range); approximate ones are shown in Services, and a note lists them.
 
 ### Removed
 - Flatpak packaging (`packaging/flatpak/`, `docs/FLATPAK.md`) and its CI job: the app is not going on Flathub.

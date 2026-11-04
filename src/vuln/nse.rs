@@ -90,6 +90,21 @@ pub fn products(p: &NmapPort) -> Vec<Product> {
             (Some(n), 0) => n.clone(),
             _ => pretty(product),
         };
+        // Only an exact version is used for CVE matching; an approximate one
+        // ("4", "3.X - 4.X") is shown but gets no CPE (see is_precise_version).
+        if !super::nvd::is_precise_version(&version) {
+            let approx = match (&p.version, i) {
+                (Some(v), 0) => v.clone(),
+                _ => version.clone(),
+            };
+            let shown = if approx.is_empty() { name.clone() } else { format!("{name} {approx}") };
+            let mut prod = Product::new(&detect::clean(&shown, 60), vendor, product, "", None);
+            prod.backported = distro;
+            if !out.iter().any(|o| o.cpe.is_none() && o.name == prod.name) {
+                out.push(prod);
+            }
+            continue;
+        }
         let (ver, upd) = split_version(product, &version);
         let mut prod = Product::new(&name, vendor, product, ver, upd);
         prod.backported = distro;
@@ -319,6 +334,19 @@ mod tests {
         // No version anywhere → shown, but no CPE (no guessing).
         p.version = None;
         assert_eq!(products(&p)[0].cpe, None);
+        // Approximate versions (real Nmap Samba fingerprints) → no CPE, no CVE flood.
+        p.cpes = vec!["cpe:/a:samba:samba".into()];
+        p.product = Some("Samba smbd".into());
+        for v in ["3.X - 4.X", "4", "4.X"] {
+            p.version = Some(v.into());
+            let prod = &products(&p)[0];
+            assert_eq!(prod.cpe, None, "{v}");
+            assert_eq!(prod.label(), format!("Samba smbd {v}"));
+        }
+        p.cpes = vec!["cpe:/a:samba:samba:4".into()];
+        assert_eq!(products(&p)[0].cpe, None);
+        p.cpes = vec!["cpe:/a:samba:samba:4.6.2".into()];
+        assert_eq!(products(&p)[0].cpe.as_deref(), Some("cpe:2.3:a:samba:samba:4.6.2:*:*:*:*:*:*:*"));
         // Hostile version strings never reach a CPE.
         p.cpes = vec!["cpe:/a:apache:http_server:2.4%3a*".into()];
         assert_eq!(products(&p)[0].cpe, None);

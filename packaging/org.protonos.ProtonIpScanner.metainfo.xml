@@ -92,6 +92,11 @@
     <binary>proton-ip-scanner</binary>
   </provides>
   <releases>
+    <release version="1.4.1" date="2026-11-04">
+      <description>
+        <p>Fewer false positives: CVEs are no longer matched for services whose exact version is unknown (for example Samba, which Nmap reports only as "4").</p>
+      </description>
+    </release>
     <release version="1.4.0" date="2026-11-04">
       <description>
         <p>Optional Nmap engine: identify operating systems and exact service versions, and use Nmap's safe scripts in vulnerability assessments. A deep scan asks for administrator rights for that one scan only. Five new configuration checks.</p>

@@ -455,14 +455,32 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
         let _ = tx.send(VulnEvent::Note("CVE matching is off, so only configuration checks were run.".into()));
         return;
     }
-    // Unique CPEs → the services that run them.
+    // Unique CPEs → the services that run them. Products whose version is
+    // only approximate are not matched (that would list nearly every CVE of
+    // the product); the note says which ones.
     let mut by_cpe: BTreeMap<String, Vec<(&Service, &detect::Product)>> = BTreeMap::new();
+    let mut approximate: Vec<String> = Vec::new();
     for s in &services {
         for p in &s.products {
             if let Some(cpe) = &p.cpe {
-                by_cpe.entry(cpe.clone()).or_default().push((s, p));
+                if cpe.split(':').nth(5).is_some_and(nvd::is_precise_version) {
+                    by_cpe.entry(cpe.clone()).or_default().push((s, p));
+                } else {
+                    approximate.push(format!("{} ({}:{})", p.label(), s.ip, s.port));
+                }
             }
         }
+    }
+    approximate.dedup();
+    if !approximate.is_empty() {
+        let n = approximate.len();
+        approximate.truncate(5);
+        let _ = tx.send(VulnEvent::Note(format!(
+            "Only an approximate version is known for {n} service(s), e.g. {}. CVEs were not matched for them, \
+             because an approximate version would match almost every CVE of the product. Check the installed \
+             version on the device.",
+            approximate.join(", ")
+        )));
     }
     // CVE ids that Nmap scripts confirmed (looked up by id).
     let mut script_ids: Vec<String> = script_cves.iter().map(|f| f.id.clone()).collect();

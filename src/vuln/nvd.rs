@@ -359,6 +359,24 @@ impl CpeRule {
 
 /// Compare version strings piece by piece: numbers numerically, letters
 /// alphabetically (`1.1.1f < 1.1.1k`, `9.3 < 9.3p2 < 9.10`).
+/// Is this an exact version that CVE version ranges can be compared with?
+///
+/// Network fingerprints sometimes only know a family: Nmap reports Samba as
+/// "4" or "3.X - 4.X". Compared with NVD ranges, "4" is older than every
+/// fixed 4.x release, so it would "match" nearly every CVE ever published for
+/// the product — false positives. An exact version has at least
+/// `major.minor`, no wildcard (`X`) and no range.
+pub fn is_precise_version(v: &str) -> bool {
+    let v = v.trim();
+    if v.is_empty() || !v.starts_with(|c: char| c.is_ascii_digit()) || v.contains(char::is_whitespace) {
+        return false;
+    }
+    let parts: Vec<&str> = v.split('.').collect();
+    parts.len() >= 2
+        && parts[1].starts_with(|c: char| c.is_ascii_digit())
+        && !parts.iter().any(|p| p.eq_ignore_ascii_case("x") || p.eq_ignore_ascii_case("*"))
+}
+
 pub fn cmp_version(a: &str, b: &str) -> std::cmp::Ordering {
     fn pieces(s: &str) -> Vec<(bool, String)> {
         let mut out: Vec<(bool, String)> = Vec::new();
@@ -455,6 +473,16 @@ fn percent_encode(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn precise_versions() {
+        for v in ["8.9", "1.1.1", "2022.83", "4.6.2", "10.0.17763"] {
+            assert!(is_precise_version(v), "{v}");
+        }
+        for v in ["", "4", "4.X", "3.X - 4.X", "4.x", "*", "x.1", "4.", "v4.1", "4 .1"] {
+            assert!(!is_precise_version(v), "{v}");
+        }
+    }
     use super::*;
     use serde_json::json;
 
