@@ -23,6 +23,7 @@
 
 pub mod checks;
 pub mod detect;
+pub mod nse;
 pub mod nvd;
 pub mod offline;
 pub mod score;
@@ -145,6 +146,35 @@ pub fn cve_data_label(source: CveSource) -> String {
     }
 }
 
+/// Which engine identifies services.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum Engine {
+    /// Proton's own probes (always available).
+    #[default]
+    Builtin,
+    /// Nmap's version detection and safe NSE scripts, plus Proton's checks.
+    Nmap,
+}
+
+impl Engine {
+    pub fn label(self) -> &'static str {
+        match self {
+            Engine::Builtin => "Built-in",
+            Engine::Nmap => "Nmap",
+        }
+    }
+}
+
+/// "Normal · Nmap 7.94SVN (deep)" for reports.
+pub fn engine_label(speed: Speed, engine: Engine, deep: bool) -> String {
+    match (engine, crate::nmap::find()) {
+        (Engine::Nmap, Some(n)) => {
+            format!("{} · {}{}", speed.label(), n.label(), if deep { " (deep scan)" } else { "" })
+        }
+        _ => format!("{} · built-in engine", speed.label()),
+    }
+}
+
 /// Options chosen in the Vulnerability Scanner tab.
 #[derive(Clone, Debug)]
 pub struct VulnOptions {
@@ -160,6 +190,10 @@ pub struct VulnOptions {
     pub safe_logins: bool,
     pub nvd_api_key: Option<String>,
     pub nets: Vec<LocalNet>,
+    pub engine: Engine,
+    /// Nmap only: SYN scan + OS detection (asks for admin rights on Linux,
+    /// for this one run).
+    pub deep: bool,
 }
 
 /// Scan phases, shown in the status bar.
@@ -313,22 +347,33 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
     }
 
     // ---- Phase 2: open ports -------------------------------------------
+    // A deep Nmap scan does its own (SYN) port scan in phase 3.
+    let use_nmap = opts.engine == Engine::Nmap;
+    let deep = use_nmap && opts.deep;
     let mut open: Vec<(Ipv4Addr, u16)> = Vec::new();
-    match scanner::start_port_scan(live.clone(), opts.ports.clone(), &settings) {
-        Ok(job) => {
-            progress.set(Phase::Ports, job.total);
-            follow(&job, progress, cancel, |ev| {
-                if let Event::OpenPort(ip, p) = ev {
-                    open.push((ip, p.port));
+    if !deep && !builtin_port_scan(&live, opts, &settings, tx, progress, cancel, &mut open) {
+        return;
+    }
+    if cancel.load(Ordering::Relaxed) {
+        return;
+    }
+
+    // ---- Phase 3a: Nmap (optional) -------------------------------------
+    let mut nm = NmapResults::default();
+    if use_nmap {
+        let ok = run_nmap(&live, &open, opts, deep, progress, cancel, tx, &mut nm);
+        if deep {
+            open = nm.ports.keys().copied().collect();
+            if !ok && !cancel.load(Ordering::Relaxed) {
+                // Nmap failed: fall back to the built-in port scan.
+                if !builtin_port_scan(&live, opts, &settings, tx, progress, cancel, &mut open) {
+                    return;
                 }
-            });
-        }
-        Err(e) => {
-            let _ = tx.send(VulnEvent::Note(e));
-            return;
+            }
         }
     }
     open.sort();
+    open.dedup();
     if cancel.load(Ordering::Relaxed) {
         return;
     }
@@ -338,24 +383,60 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
         return;
     }
 
-    // ---- Phase 3: services + configuration checks ----------------------
+    // ---- Phase 3b: services + configuration checks ---------------------
     progress.set(Phase::Services, open.len());
     let ctx = ProbeCtx::new(Duration::from_millis(opts.port_timeout_ms.clamp(300, 5_000)), opts.safe_logins);
     let services: Mutex<Vec<Service>> = Mutex::new(Vec::new());
+    let script_cves: Mutex<Vec<Finding>> = Mutex::new(Vec::new());
     let workers = match opts.speed {
         Speed::Normal => 16,
         Speed::Polite => 4,
         Speed::Slow => 1,
     };
+    // Host-level Nmap results (SMB security mode, OS) go with one port per host.
+    let mut anchor: HashMap<Ipv4Addr, u16> = HashMap::new();
+    for &(ip, port) in &open {
+        let a = anchor.entry(ip).or_insert(port);
+        if port == 445 || (port == 139 && *a != 445) {
+            *a = port;
+        }
+    }
+    let today = offline::date(
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0),
+    );
     run_paced(open.len(), workers, opts.speed, cancel, |i| {
         let Some(&(ip, port)) = open.get(i) else { return };
-        let (svc, findings) = detect::probe(ip, port, &ctx);
+        let (mut svc, mut findings) = detect::probe(ip, port, &ctx);
+        let mut confirmed = Vec::new();
+        if let Some(np) = nm.ports.get(&(ip, port)) {
+            nse::merge(&mut svc, np);
+            let (done, cves) = nse::findings(ip, port, &svc.name, &np.scripts, &today);
+            findings.extend(done);
+            confirmed.extend(cves);
+        }
+        if anchor.get(&ip) == Some(&port) {
+            if let Some(scripts) = nm.host_scripts.get(&ip) {
+                nse::add_scripts(&mut svc, scripts);
+                let (done, cves) = nse::findings(ip, port, &svc.name, scripts, &today);
+                findings.extend(done);
+                confirmed.extend(cves);
+            }
+            if let Some(os) = nm.os.get(&ip) {
+                findings.push(os_finding(ip, port, &svc.name, os));
+            }
+        }
+        // The same check can come from Proton and from an Nmap script.
+        let mut seen = std::collections::HashSet::new();
+        findings.retain(|f| seen.insert(f.id.clone()));
         for f in findings {
             let _ = tx.send(VulnEvent::Finding(Box::new(f)));
         }
         let _ = tx.send(VulnEvent::Service(Box::new(svc.clone())));
         if let Ok(mut s) = services.lock() {
             s.push(svc);
+        }
+        if let Ok(mut c) = script_cves.lock() {
+            c.extend(confirmed);
         }
         progress.done.fetch_add(1, Ordering::Relaxed);
     });
@@ -365,7 +446,12 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
 
     // ---- Phase 4: known vulnerabilities --------------------------------
     let services = services.into_inner().unwrap_or_default();
+    let mut script_cves = script_cves.into_inner().unwrap_or_default();
+    script_cves.dedup_by(|a, b| a.id == b.id && a.ip == b.ip && a.port == b.port);
     if opts.cve_source == CveSource::Off {
+        for f in script_cves {
+            let _ = tx.send(VulnEvent::Finding(Box::new(f)));
+        }
         let _ = tx.send(VulnEvent::Note("CVE matching is off, so only configuration checks were run.".into()));
         return;
     }
@@ -378,53 +464,87 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
             }
         }
     }
-    if by_cpe.is_empty() {
+    // CVE ids that Nmap scripts confirmed (looked up by id).
+    let mut script_ids: Vec<String> = script_cves.iter().map(|f| f.id.clone()).collect();
+    script_ids.sort();
+    script_ids.dedup();
+    script_ids.truncate(40);
+    if by_cpe.is_empty() && script_ids.is_empty() {
         let _ = tx.send(VulnEvent::Note(
             "No software versions could be identified on the open ports, so no CVE lookups were needed.".into(),
         ));
         return;
     }
-    progress.set(Phase::Lookup, by_cpe.len());
+    progress.set(Phase::Lookup, by_cpe.len() + script_ids.len());
 
     // Records per CPE, from NVD (online) or the offline database.
     let mut records: BTreeMap<String, Vec<nvd::CveRecord>> = BTreeMap::new();
+    let mut by_id: HashMap<String, nvd::CveRecord> = HashMap::new();
     let mut errors = Vec::new();
     let mut use_offline = opts.cve_source == CveSource::Offline;
     let mut db = nvd::VulnDb::new(opts.nvd_api_key.clone());
     if !use_offline {
-        for (cpe, users) in &by_cpe {
-            if cancel.load(Ordering::Relaxed) {
-                return;
-            }
-            let label = users.first().map(|(_, p)| p.label()).unwrap_or_default();
-            progress.set_detail(&format!("NVD: {label}"));
-            let mut list = Vec::new();
-            let mut failed = None;
-            // nginx is filed under two vendors in NVD (nginx, later F5).
-            for cpe_variant in cpe_aliases(cpe) {
-                match db.cves_for_cpe(&cpe_variant, cancel) {
-                    Ok(r) => list.extend(r),
-                    Err(e) => failed = Some(e),
+        'online: {
+            for (cpe, users) in &by_cpe {
+                if cancel.load(Ordering::Relaxed) {
+                    return;
                 }
-            }
-            if let Some(e) = failed {
-                if e.starts_with("could not reach") {
-                    // No connection: switch to the offline database (if any) for everything.
-                    use_offline = true;
-                    records.clear();
-                    errors.clear();
-                    break;
+                let label = users.first().map(|(_, p)| p.label()).unwrap_or_default();
+                progress.set_detail(&format!("NVD: {label}"));
+                let mut list = Vec::new();
+                let mut failed = None;
+                // nginx is filed under two vendors in NVD (nginx, later F5).
+                for cpe_variant in cpe_aliases(cpe) {
+                    match db.cves_for_cpe(&cpe_variant, cancel) {
+                        Ok(r) => list.extend(r),
+                        Err(e) => failed = Some(e),
+                    }
                 }
-                errors.push(format!("{label}: {e}"));
+                if let Some(e) = failed {
+                    if e.starts_with("could not reach") {
+                        // No connection: switch to the offline database (if any) for everything.
+                        use_offline = true;
+                        break 'online;
+                    }
+                    errors.push(format!("{label}: {e}"));
+                }
+                list.sort_by(|a, b| a.id.cmp(&b.id));
+                list.dedup_by(|a, b| a.id == b.id);
+                records.insert(cpe.clone(), list);
+                progress.done.fetch_add(1, Ordering::Relaxed);
             }
-            list.sort_by(|a, b| a.id.cmp(&b.id));
-            list.dedup_by(|a, b| a.id == b.id);
-            records.insert(cpe.clone(), list);
-            progress.done.fetch_add(1, Ordering::Relaxed);
+            for r in records.values().flatten() {
+                by_id.entry(r.id.clone()).or_insert_with(|| r.clone());
+            }
+            for id in &script_ids {
+                if cancel.load(Ordering::Relaxed) {
+                    return;
+                }
+                if !by_id.contains_key(id) {
+                    progress.set_detail(&format!("NVD: {id}"));
+                    match db.cve_by_id(id, cancel) {
+                        Ok(Some(r)) => {
+                            by_id.insert(id.clone(), r);
+                        }
+                        Ok(None) => {}
+                        Err(e) if e.starts_with("could not reach") => {
+                            use_offline = true;
+                            break 'online;
+                        }
+                        Err(e) => errors.push(format!("{id}: {e}")),
+                    }
+                }
+                progress.done.fetch_add(1, Ordering::Relaxed);
+            }
+        }
+        if use_offline {
+            records.clear();
+            by_id.clear();
+            errors.clear();
         }
     }
     if use_offline {
-        progress.set(Phase::Lookup, by_cpe.len());
+        progress.set(Phase::Lookup, by_cpe.len() + script_ids.len());
         progress.set_detail("offline database");
         let fallback = opts.cve_source == CveSource::Online;
         match offline::OfflineDb::load_installed() {
@@ -432,6 +552,11 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
                 for cpe in by_cpe.keys() {
                     records.insert(cpe.clone(), off.lookup(cpe));
                     progress.done.fetch_add(1, Ordering::Relaxed);
+                }
+                for id in &script_ids {
+                    if let Some(r) = off.by_id(id) {
+                        by_id.insert(id.clone(), r);
+                    }
                 }
                 let info = off.info();
                 let mut note = if fallback {
@@ -455,10 +580,16 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
                      or import a database exported from a computer with internet."
                         .into()
                 }));
+                for f in script_cves {
+                    let _ = tx.send(VulnEvent::Finding(Box::new(f)));
+                }
                 return;
             }
             Err(e) => {
                 let _ = tx.send(VulnEvent::Note(format!("The offline vulnerability database could not be read: {e}")));
+                for f in script_cves {
+                    let _ = tx.send(VulnEvent::Finding(Box::new(f)));
+                }
                 return;
             }
         }
@@ -472,11 +603,19 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
             }
         }
     }
+    // A CVE an Nmap script confirmed replaces the version-based match.
+    cve_findings.retain(|f| !script_cves.iter().any(|c| c.id == f.id && c.ip == f.ip && c.port == f.port));
+    for mut f in script_cves {
+        if let Some(r) = by_id.get(&f.id) {
+            nse::enrich(&mut f, r);
+        }
+        cve_findings.push(f);
+    }
 
     // EPSS (online: ask FIRST; offline: stored in the database), then priority.
     if !cve_findings.is_empty() {
         let epss: HashMap<String, Epss> = if use_offline {
-            records.values().flatten().filter_map(|r| r.epss.map(|e| (r.id.clone(), e))).collect()
+            records.values().flatten().chain(by_id.values()).filter_map(|r| r.epss.map(|e| (r.id.clone(), e))).collect()
         } else {
             progress.set_detail("FIRST: EPSS scores");
             let mut ids: Vec<String> = cve_findings.iter().map(|f| f.id.clone()).collect();
@@ -492,8 +631,10 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
         };
         for f in &mut cve_findings {
             f.epss = epss.get(&f.id).copied();
-            let impact = f.cvss.as_ref().map(|c| c.score).unwrap_or(5.0);
-            f.ppr = score::ppr(impact, score::cve_threat(f.kev, f.epss));
+            let impact = f.cvss.as_ref().map(|c| c.score).unwrap_or_else(|| {
+                if f.evidence.starts_with("Confirmed by Nmap") { nse::severity_impact(f.severity) } else { 5.0 }
+            });
+            f.ppr = score::ppr(impact, score::cve_threat(f.kev, f.epss).max(confirmed_threat(f)));
         }
     }
     for f in cve_findings {
@@ -505,6 +646,156 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
             "{} vulnerability lookup(s) failed, so results may be incomplete. First error: {first}",
             errors.len()
         )));
+    }
+}
+
+/// A vulnerability an Nmap script confirmed on the device is more urgent
+/// than a version-based match with the same EPSS.
+fn confirmed_threat(f: &Finding) -> f32 {
+    if f.evidence.starts_with("Confirmed by Nmap") { 6.0 } else { 0.0 }
+}
+
+/// What Nmap reported, per host and port.
+#[derive(Default)]
+struct NmapResults {
+    ports: HashMap<(Ipv4Addr, u16), crate::nmap::NmapPort>,
+    host_scripts: HashMap<Ipv4Addr, Vec<crate::nmap::Script>>,
+    os: HashMap<Ipv4Addr, String>,
+}
+
+/// Proton's own port scan of the live hosts. Returns false if the scan could not run.
+fn builtin_port_scan(
+    live: &[Ipv4Addr],
+    opts: &VulnOptions,
+    settings: &Settings,
+    tx: &Sender<VulnEvent>,
+    progress: &Progress,
+    cancel: &AtomicBool,
+    open: &mut Vec<(Ipv4Addr, u16)>,
+) -> bool {
+    match scanner::start_port_scan(live.to_vec(), opts.ports.clone(), settings) {
+        Ok(job) => {
+            progress.set(Phase::Ports, job.total);
+            follow(&job, progress, cancel, |ev| {
+                if let Event::OpenPort(ip, p) = ev {
+                    open.push((ip, p.port));
+                }
+            });
+            true
+        }
+        Err(e) => {
+            let _ = tx.send(VulnEvent::Note(e));
+            false
+        }
+    }
+}
+
+/// Run Nmap on the hosts. Normal: only the ports found open (fast); deep:
+/// every selected port with a SYN scan and OS detection. Returns false if
+/// Nmap could not run (a note explains why).
+#[allow(clippy::too_many_arguments)]
+fn run_nmap(
+    live: &[Ipv4Addr],
+    open: &[(Ipv4Addr, u16)],
+    opts: &VulnOptions,
+    deep: bool,
+    progress: &Progress,
+    cancel: &AtomicBool,
+    tx: &Sender<VulnEvent>,
+    out: &mut NmapResults,
+) -> bool {
+    let (targets, ports): (Vec<Ipv4Addr>, Vec<u16>) = if deep {
+        (live.to_vec(), opts.ports.clone())
+    } else {
+        let mut t: Vec<Ipv4Addr> = open.iter().map(|o| o.0).collect();
+        let mut p: Vec<u16> = open.iter().map(|o| o.1).collect();
+        t.sort();
+        t.dedup();
+        p.sort_unstable();
+        p.dedup();
+        (t, p)
+    };
+    if targets.is_empty() || ports.is_empty() {
+        return true;
+    }
+    progress.set(Phase::Services, 100);
+    progress.set_detail(if deep && cfg!(target_os = "linux") {
+        "Nmap: waiting for administrator approval"
+    } else {
+        "Nmap: starting"
+    });
+    let req = crate::nmap::Request {
+        targets,
+        ports,
+        speed: opts.speed,
+        deep,
+        scripts: crate::nmap::Scripts::Assess { logins: opts.safe_logins },
+    };
+    let result = crate::nmap::run(&req, cancel, |ev| match ev {
+        crate::nmap::Event::Progress(task, pct) => {
+            progress.set_detail(&format!("Nmap: {task} {pct:.0}%"));
+            progress.done.store(pct as usize, Ordering::Relaxed);
+        }
+        crate::nmap::Event::Host(h) => {
+            let Some(ip) = h.ip else { return };
+            // Only addresses we asked about (Nmap output is not trusted blindly).
+            if !req.targets.contains(&ip) {
+                return;
+            }
+            if let Some(os) = &h.os {
+                out.os.insert(ip, os.label());
+            }
+            if !h.scripts.is_empty() {
+                out.host_scripts.insert(ip, h.scripts);
+            }
+            for p in h.ports {
+                if req.ports.contains(&p.port) {
+                    out.ports.insert((ip, p.port), p);
+                }
+            }
+        }
+    });
+    match result {
+        Ok(s) => {
+            if s.skipped > 0 {
+                let _ = tx.send(VulnEvent::Note(format!(
+                    "{} host result(s) from Nmap were too large or malformed and were skipped.",
+                    s.skipped
+                )));
+            }
+            true
+        }
+        Err(e) => {
+            let _ = tx.send(VulnEvent::Note(format!(
+                "Nmap could not complete the scan ({e}). Proton's built-in engine was used instead."
+            )));
+            false
+        }
+    }
+}
+
+/// Informational finding with Nmap's operating-system guess.
+fn os_finding(ip: Ipv4Addr, port: u16, service: &str, os: &str) -> Finding {
+    Finding {
+        id: "NMAP-OS".into(),
+        title: format!("Operating system: {os}"),
+        ip,
+        port,
+        service: service.to_string(),
+        product: None,
+        severity: Severity::Info,
+        cvss: None,
+        epss: None,
+        kev: false,
+        ppr: 0.0,
+        description: "Nmap's operating-system detection (deep scan) compared how this device answers network \
+                      probes with its database of known systems. The percentage is Nmap's confidence."
+            .into(),
+        solution: "No action needed. Check that the system is still supported by its vendor and receives updates."
+            .into(),
+        evidence: format!("Nmap OS detection: {os}"),
+        references: vec![],
+        published: None,
     }
 }
 
@@ -686,6 +977,8 @@ mod tests {
             safe_logins: true,
             nvd_api_key: None,
             nets: vec![],
+            engine: Engine::Builtin,
+            deep: false,
         });
         let (mut services, mut notes) = (Vec::new(), Vec::new());
         for ev in job.rx.iter() {
@@ -702,6 +995,83 @@ mod tests {
             notes.iter().any(|n| n.contains("CVE matching is off"))
                 || notes.iter().any(|n| n.contains("No open ports"))
         );
+    }
+}
+
+#[cfg(test)]
+mod nmap_tests {
+    use super::*;
+    use std::io::{BufRead, BufReader, Write};
+
+    /// Whole assessment with the Nmap engine against a local fake FTP server
+    /// that allows anonymous login (skipped when Nmap is not installed).
+    #[test]
+    fn assessment_with_nmap_engine() {
+        if crate::nmap::find().is_none() {
+            return;
+        }
+        let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = l.local_addr().unwrap().port();
+        std::thread::spawn(move || {
+            for s in l.incoming().flatten() {
+                std::thread::spawn(move || {
+                    let mut w = s.try_clone().unwrap();
+                    let _ = w.set_read_timeout(Some(Duration::from_secs(3)));
+                    let _ = w.write_all(b"220 (vsFTPd 3.0.3)\r\n");
+                    for line in BufReader::new(s).lines().map_while(Result::ok) {
+                        let reply: &[u8] = if line.starts_with("USER") {
+                            b"331 Please specify the password.\r\n"
+                        } else if line.starts_with("PASS") {
+                            b"230 Login successful.\r\n"
+                        } else if line.starts_with("SYST") {
+                            b"215 UNIX Type: L8\r\n"
+                        } else if line.starts_with("QUIT") {
+                            let _ = w.write_all(b"221 Goodbye.\r\n");
+                            break;
+                        } else {
+                            b"500 Unknown command.\r\n"
+                        };
+                        if w.write_all(reply).is_err() {
+                            break;
+                        }
+                    }
+                });
+            }
+        });
+        let job = start(VulnOptions {
+            targets: vec![Ipv4Addr::LOCALHOST],
+            discover_first: false,
+            ports: vec![port],
+            speed: Speed::Normal,
+            port_timeout_ms: 800,
+            cve_source: CveSource::Off,
+            safe_logins: true,
+            nvd_api_key: None,
+            nets: vec![],
+            engine: Engine::Nmap,
+            deep: false,
+        });
+        let (mut findings, mut services, mut notes) = (Vec::new(), Vec::new(), Vec::new());
+        for ev in job.rx.iter() {
+            match ev {
+                VulnEvent::Finding(f) => findings.push(*f),
+                VulnEvent::Service(s) => services.push(*s),
+                VulnEvent::Note(n) => notes.push(n),
+                VulnEvent::Finished => break,
+                VulnEvent::Host => {}
+            }
+        }
+        assert!(!notes.iter().any(|n| n.contains("Nmap could not")), "{notes:?}");
+        let svc = services.iter().find(|s| s.port == port).expect("service");
+        // Nmap's vsftpd CPE becomes NVD's beasts:vsftpd.
+        assert!(
+            svc.products.iter().any(|p| p.cpe.as_deref() == Some("cpe:2.3:a:beasts:vsftpd:3.0.3:*:*:*:*:*:*:*")),
+            "{:?}",
+            svc.products
+        );
+        assert!(svc.nse.iter().any(|(id, _)| id == "ftp-anon"), "{:?}", svc.nse);
+        // Found by Proton's check and by Nmap's ftp-anon script, reported once.
+        assert_eq!(findings.iter().filter(|f| f.id == "PIS-0002").count(), 1, "{findings:?}");
     }
 }
 
@@ -748,6 +1118,8 @@ mod network_tests {
             safe_logins: true,
             nvd_api_key: None,
             nets: vec![],
+            engine: Engine::Builtin,
+            deep: false,
         });
         let (mut findings, mut notes, mut services) = (Vec::new(), Vec::new(), Vec::new());
         for ev in job.rx.iter() {

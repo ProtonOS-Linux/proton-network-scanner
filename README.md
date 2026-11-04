@@ -36,6 +36,9 @@ Part of the [Proton OS](https://www.protonos.org) family.
 - **Ping test** for the selected device: live latency chart, packet loss, min/avg/max, jitter and a
   plain-language verdict ("Excellent", "Fair — weak Wi-Fi?"…).
 - Port scan the selected device or all devices; presets or your own list (`22,80,8000-8100`).
+- **🔬 Identify with Nmap** (optional, when [Nmap](https://nmap.org) is installed): exact service versions,
+  the **operating system** (deep scan), and device details from Nmap's safe identification scripts
+  (certificate names, page titles, SMB/OS information) for the selected device or all devices.
 - Click anywhere on a row to select it; right-click to copy the IP, MAC, name, manufacturer or all details
   (no text-selection cursor getting in the way). CSV / HTML export, light and dark theme.
 
@@ -53,9 +56,14 @@ Part of the [Proton OS](https://www.protonos.org) family.
   - **EPSS** — probability of exploitation in the next 30 days (FIRST),
   - **KEV** — known exploited, from CISA's catalog,
   - **PPR** — *Proton Priority Rating*, a VPR-style 0–10 score (see below).
-- **14 safe configuration checks** (CVSS v4.0-scored): Redis / Elasticsearch / memcached / Docker API
+- **19 safe configuration checks** (CVSS v4.0-scored): Redis / Elasticsearch / memcached / Docker API
   without authentication, VNC without password, anonymous FTP, anonymous MQTT, Telnet, login pages over
   plain HTTP, exposed RDP / SMB / databases, and more.
+- **Optional Nmap engine**: Nmap's version detection plus its **safe NSE scripts only** (Heartbleed, POODLE,
+  MS17-010, SMB signing, SSLv2, expired certificates, risky HTTP methods, open X11 …), merged with Proton's own
+  checks. Vulnerabilities a script confirms are scored with NVD/EPSS like every other CVE.
+  **Deep scan** (SYN scan + OS detection) asks for admin rights **for that one run only** — see
+  [Nmap](#nmap-optional).
 - **Top 10 vulnerabilities** by priority, all findings (click a severity to filter), services list, and a
   details panel with description, solution, evidence and references.
 - **Slow probing** so scans are not blocked: *Normal*, *Polite* (fewer probes, random pauses) or
@@ -64,7 +72,9 @@ Part of the [Proton OS](https://www.protonos.org) family.
   branded **PDF** (summary, Top 10, every finding with affected hosts, services, methodology).
 
 ### Safe and light
-- **Never needs root or administrator rights.** No external programs, no background service.
+- **Never needs root or administrator rights.** Nothing runs in the background. The only external program
+  is Nmap, if you install it and choose it; admin rights are requested only when you tick *Deep scan*,
+  only for that one Nmap run.
 - Online lookups send **only product names/versions and CVE numbers** — never IP addresses or results.
   They can be switched off.
 - Uses **no CPU when idle**; a full vulnerability assessment from the command line uses ~9 MB of memory.
@@ -172,6 +182,34 @@ CVE matches are based on the version a service announces (like other scanners' r
 checks). Linux distributions back-port fixes without changing version numbers; such findings are
 marked so you can confirm them with the installed package version.
 
+### Nmap (optional)
+
+Proton IP Scanner works on its own. If [Nmap](https://nmap.org) is installed it can also use it:
+
+<img src="docs/screenshot-nmap.png" width="760" alt="Identify with Nmap menu with the Deep scan option; details show the operating system">
+
+| | Normal (default) | Deep scan (tick the box) |
+|---|---|---|
+| Port scan | TCP connect (as you) | SYN scan |
+| Services | Nmap version detection | same |
+| Scripts | **safe** NSE scripts only | same |
+| Operating system | from what services report | **Nmap OS detection** |
+| Rights | your user, **no admin** | Linux: password prompt (pkexec) **for this one run**; Windows: Npcap driver, no prompt |
+
+* **Install**: Linux `sudo apt install nmap` (the .deb recommends it). Windows: the installer from
+  [nmap.org/download](https://nmap.org/download.html) (includes Npcap). Then Settings → **⟳ Look again**,
+  or restart the app.
+* **Scripts**: Nmap's `default` and `vuln` scripts that Nmap itself classifies as `safe`, minus every
+  intrusive, DoS, exploit, brute-force, fuzzing, malware, broadcast and external (internet) category — and
+  minus `http-slowloris-check` and `ftp-bounce`. With *Safe login checks* off, the anonymous-login scripts
+  are left out too.
+* **Deep scan on Linux** only runs an Nmap installed by the package manager (owned by root, in `/usr/bin`
+  or another system folder). An Nmap you built or copied into your home folder is used for normal scans only.
+* Where to find it: **Network Scanner → 🔬 Identify with Nmap** and **Vulnerability Scanner → Engine**.
+* Nmap is not included in Proton IP Scanner (it has its own licence); it is found on your system.
+* The **Flatpak** version cannot use Nmap (the sandbox cannot run programs from your computer); use the
+  .deb for Nmap features.
+
 ### Command line
 
 ```text
@@ -181,12 +219,14 @@ proton-ip-scanner --scan 10.0.0.1-50 --csv > devices.csv   CSV output
 proton-ip-scanner --scan auto --vuln --report pdf          vulnerability assessment + PDF report
 proton-ip-scanner --scan 10.0.0.5 --vuln --stealth         very slow, hard-to-detect probing
 proton-ip-scanner --scan auto --vuln --cve offline         use the offline CVE database only
+proton-ip-scanner --scan auto --nmap                       + OS and service versions from Nmap
+proton-ip-scanner --scan auto --vuln --nmap --deep         Nmap engine, SYN scan + OS detection (asks for admin)
 proton-ip-scanner --update-db                              download/update the offline CVE database
 proton-ip-scanner --help
 ```
 
 Options: `--ports`, `--no-ports`, `--threads N`, `--timeout MS`, `--banners`, `--no-names`, `--slow`,
-`--csv`; with `--vuln`: `--report pdf|xlsx`, `--cve online|offline|off` (`--offline` = offline), `--stealth`,
+`--csv`, `--nmap`, `--deep`; with `--vuln`: `--report pdf|xlsx`, `--cve online|offline|off` (`--offline` = offline), `--stealth`,
 `--no-logins`; database: `--update-db`, `--export-db`, `--import-db <file>`.
 
 Environment: `PROTON_IP_SCANNER_THEME=light|dark` forces a theme; `PROTON_IP_SCANNER_DEMO=1` (or `vuln`,
@@ -205,6 +245,7 @@ Environment: `PROTON_IP_SCANNER_THEME=light|dark` forces a theme; `PROTON_IP_SCA
 | Names | Router DNS (UDP 53) + NetBIOS (UDP 137) + mDNS (UDP 5353) + LLMNR (UDP 5355) + UPnP/SSDP (UDP 1900 + description XML) + system resolver | same |
 | Ports | TCP connect scan | same |
 | Services | Banners, HTTP(S) headers, protocol handshakes | same |
+| Nmap (optional) | `nmap` started directly (no shell), targets on stdin, XML on stdout; deep scan via `pkexec` | `nmap.exe`, deep scan via Npcap (`--privileged`) |
 | CVEs | NVD API 2.0 (CPE match) + FIRST EPSS API over HTTPS, or the offline database (local version-range matching) | same |
 
 ### Code layout
@@ -233,6 +274,9 @@ src/vuln/checks.rs       Proton configuration checks (CVSS v4.0 vectors)
 src/vuln/nvd.rs          NVD + EPSS client, parsing, CPE version rules
 src/vuln/offline.rs      offline CVE database: download, export/import, local matching
 src/vuln/score.rs        severity bands, priority rating (PPR)
+src/vuln/nse.rs          Nmap results in assessments: CPE mapping, NSE script findings
+src/nmap/mod.rs          optional Nmap engine: finding Nmap, safe arguments, running, deep-scan elevation
+src/nmap/parse.rs        streaming parser for Nmap's XML output (untrusted input)
 src/report/xlsx.rs       Excel report
 src/report/pdf.rs        PDF report (self-contained writer)
 src/export.rs            CSV / HTML device lists, safe file saving
@@ -255,7 +299,7 @@ sudo apt install build-essential pkg-config libxkbcommon-dev libgl1-mesa-dev
 #   cargo zigbuild --release --target x86_64-unknown-linux-gnu.2.31
 #   cargo deb --target x86_64-unknown-linux-gnu --no-build
 # Windows installer (NSIS 3, from Linux or Windows):
-#   makensis -DVERSION=1.3.0 -DEXE=<path to .exe> -DOUTDIR=dist packaging/windows/installer.nsi
+#   makensis -DVERSION=1.4.0 -DEXE=<path to .exe> -DOUTDIR=dist packaging/windows/installer.nsi
 
 git clone https://github.com/ProtonOS-Linux/proton-network-scanner.git
 cd proton-network-scanner

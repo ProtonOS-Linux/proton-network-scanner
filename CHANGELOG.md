@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.4.0 — 2026-11-04
+
+### New
+- **Optional Nmap engine.** When [Nmap](https://nmap.org) is installed:
+  - **Network Scanner → 🔬 Identify with Nmap** (selected device or all devices; also in the right-click menu
+    and the details panel): exact service versions, operating system, MAC/name when missing, and the output of
+    Nmap's safe identification scripts in the details panel. The CSV export gains an *Operating system* column.
+  - **Vulnerability Scanner → Engine: Nmap**: Nmap's version detection and **safe NSE scripts only**, together
+    with Proton's own checks. Vulnerabilities a script confirms (e.g. Heartbleed, MS17-010) are looked up by CVE id
+    in NVD or the offline database and replace the version-based guess for that CVE.
+  - **Deep scan** checkbox: SYN scan + OS detection. Linux asks for the administrator password (pkexec) for that
+    single Nmap run, and only for an Nmap installed by the package manager; Windows uses Npcap without elevation.
+- Five new configuration checks from Nmap's script results: SMB signing not required (PIS-0015), SSLv2
+  (PIS-0016), expired TLS certificate (PIS-0017), risky HTTP methods (PIS-0018), X11 open to anyone (PIS-0019).
+- Command line: `--nmap` and `--deep` (with `--scan`, and with `--vuln`).
+- Settings shows the Nmap that was found, with **⟳ Look again** after installing it.
+
+### Changed
+- The .deb recommends `nmap` (not required). Nmap is never bundled or downloaded by the app.
+- Reports name the engine used ("Normal · Nmap 7.94 (deep scan)").
+
 ## 1.3.1 — 2026-11-03
 
 ### New

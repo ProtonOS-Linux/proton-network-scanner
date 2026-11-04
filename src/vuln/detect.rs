@@ -54,7 +54,7 @@ pub struct Product {
 
 impl Product {
     /// `vendor`/`product` are NVD's names; `update` is e.g. "p1" for OpenSSH.
-    fn new(name: &str, vendor: &str, product: &str, version: &str, update: Option<&str>) -> Product {
+    pub(crate) fn new(name: &str, vendor: &str, product: &str, version: &str, update: Option<&str>) -> Product {
         let ok = |s: &str| {
             !s.is_empty() && s.len() <= 32 && s.chars().all(|c| c.is_ascii_alphanumeric() || ".-_".contains(c))
         };
@@ -84,6 +84,9 @@ pub struct Service {
     pub products: Vec<Product>,
     /// First line the service sent, or the web server header (cleaned).
     pub banner: Option<String>,
+    /// Output of Nmap's safe NSE scripts for this port, `(script, output)`
+    /// (Nmap engine only; cleaned and length-limited).
+    pub nse: Vec<(String, String)>,
 }
 
 /// Shared settings for probing.
@@ -119,7 +122,7 @@ const HTTP_PORTS: [u16; 17] =
 
 /// Identify the service on `ip:port` and run the checks that apply to it.
 pub fn probe(ip: Ipv4Addr, port: u16, ctx: &ProbeCtx) -> (Service, Vec<Finding>) {
-    let mut svc = Service { ip, port, name: label_for(port), products: Vec::new(), banner: None };
+    let mut svc = Service { ip, port, name: label_for(port), products: Vec::new(), banner: None, nse: Vec::new() };
     let mut findings = Vec::new();
 
     match port {
@@ -578,7 +581,7 @@ pub fn parse_mysql_version(v: &str) -> Option<Product> {
 
 /// Distribution packages keep the upstream version number but receive
 /// security fixes, so version-based matches may be false positives.
-fn is_distro_build(s: &str) -> bool {
+pub(crate) fn is_distro_build(s: &str) -> bool {
     let l = s.to_ascii_lowercase();
     ["ubuntu", "debian", "deb1", "raspbian", "red hat", "centos", "fedora", "el7", "el8", "el9", "suse"]
         .iter()
@@ -745,7 +748,8 @@ mod tests {
             s.write_all(b"230 Login successful.\r\n").unwrap();
         });
         let ctx = ProbeCtx::new(Duration::from_millis(500), true);
-        let mut svc = Service { ip: Ipv4Addr::LOCALHOST, port, name: String::new(), products: vec![], banner: None };
+        let mut svc =
+            Service { ip: Ipv4Addr::LOCALHOST, port, name: String::new(), products: vec![], banner: None, nse: vec![] };
         let mut f = Vec::new();
         ftp_probe(&mut svc, &mut f, &ctx);
         t.join().unwrap();
@@ -766,7 +770,8 @@ mod tests {
             s.write_all(b"$60\r\n# Server\r\nredis_version:6.0.16\r\nredis_mode:standalone\r\n\r\n").unwrap();
         });
         let ctx = ProbeCtx::new(Duration::from_millis(500), true);
-        let mut svc = Service { ip: Ipv4Addr::LOCALHOST, port, name: String::new(), products: vec![], banner: None };
+        let mut svc =
+            Service { ip: Ipv4Addr::LOCALHOST, port, name: String::new(), products: vec![], banner: None, nse: vec![] };
         let mut f = Vec::new();
         redis_probe(&mut svc, &mut f, &ctx);
         t.join().unwrap();
@@ -791,7 +796,8 @@ mod tests {
             s.write_all(resp.as_bytes()).unwrap();
         });
         let ctx = ProbeCtx::new(Duration::from_millis(500), true);
-        let mut svc = Service { ip: Ipv4Addr::LOCALHOST, port, name: "TCP".into(), products: vec![], banner: None };
+        let mut svc =
+            Service { ip: Ipv4Addr::LOCALHOST, port, name: "TCP".into(), products: vec![], banner: None, nse: vec![] };
         let mut f = Vec::new();
         http_probe(&mut svc, &mut f, &ctx, "http");
         t.join().unwrap();

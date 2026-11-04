@@ -34,6 +34,7 @@
       <li>Vulnerability assessment: service detection, known CVEs from NIST NVD ranked by CVSS v4, EPSS, CISA KEV and a priority rating</li>
       <li>Offline CVE database for networks without internet</li>
       <li>Excel and PDF reports, CSV and HTML device lists, light and dark theme</li>
+      <li>Optional Nmap engine (when installed) for operating systems, service versions and safe scripts</li>
       <li>Never needs root or administrator rights</li>
     </ul>
     <p>Only scan networks you own or have permission to scan.</p>
@@ -92,6 +93,11 @@
     <binary>proton-ip-scanner</binary>
   </provides>
   <releases>
+    <release version="1.4.0" date="2026-11-04">
+      <description>
+        <p>Optional Nmap engine: identify operating systems and exact service versions, and use Nmap's safe scripts in vulnerability assessments. A deep scan asks for administrator rights for that one scan only. Five new configuration checks.</p>
+      </description>
+    </release>
     <release version="1.3.1" date="2026-11-03">
       <description>
         <p>Available as a Flatpak, and listed in KDE Discover and other app stores.</p>

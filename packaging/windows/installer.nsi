@@ -1,7 +1,7 @@
 ; Proton IP Scanner — Windows installer (NSIS 3, Modern UI 2).
 ;
 ; Build (Linux or Windows):
-;   makensis -DVERSION=1.3.0 -DEXE=path\to\proton-ip-scanner.exe -DOUTDIR=dist packaging/windows/installer.nsi
+;   makensis -DVERSION=1.4.0 -DEXE=path\to\proton-ip-scanner.exe -DOUTDIR=dist packaging/windows/installer.nsi
 ;
 ; What it does:
 ;   * installs to "C:\Program Files\Proton IP Scanner" (per machine, needs admin once)

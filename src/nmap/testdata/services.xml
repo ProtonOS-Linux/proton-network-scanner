@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.94SVN scan initiated Wed Nov  4 04:01:47 2026 as: nmap -n -Pn -sT -sV -&#45;script &quot;(default or vuln) and safe and not (broadcast or external or brute or dos or exploit or intrusive or fuzzer or malware or http-slowloris-check or ftp-bounce)&quot; -p 18080,16379,12222,12121,18443 -oX - -&#45;stats-every 2s -&#45;noninteractive 127.0.0.1 -->
+<nmaprun scanner="nmap" args="nmap -n -Pn -sT -sV -&#45;script &quot;(default or vuln) and safe and not (broadcast or external or brute or dos or exploit or intrusive or fuzzer or malware or http-slowloris-check or ftp-bounce)&quot; -p 18080,16379,12222,12121,18443 -oX - -&#45;stats-every 2s -&#45;noninteractive 127.0.0.1" start="1793782907" startstr="Wed Nov  4 04:01:47 2026" version="7.94SVN" xmloutputversion="1.05">
+<scaninfo type="connect" protocol="tcp" numservices="5" services="12121,12222,16379,18080,18443"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1793782907" endtime="1793782917"><status state="up" reason="user-set" reason_ttl="0"/>
+<address addr="127.0.0.1" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="12121"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="ftp" product="vsftpd" version="3.0.3" ostype="Unix" method="probed" conf="10"><cpe>cpe:/a:vsftpd:vsftpd:3.0.3</cpe></service><script id="ftp-anon" output="Anonymous FTP login allowed (FTP code 230)&#xa;Can&apos;t get directory listing: PASV failed: socket EOF"/></port>
+<port protocol="tcp" portid="12222"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="ssh" product="OpenSSH" version="8.9p1 Ubuntu 3ubuntu0.1" extrainfo="Ubuntu Linux; protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:8.9p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service></port>
+<port protocol="tcp" portid="16379"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="tcpwrapped" method="probed" conf="8"/></port>
+<port protocol="tcp" portid="18080"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="tcpwrapped" method="probed" conf="8"/></port>
+<port protocol="tcp" portid="18443"><state state="closed" reason="conn-refused" reason_ttl="0"/></port>
+</ports>
+<times srtt="185" rttvar="1691" to="100000"/>
+</host>
+<runstats><finished time="1793782917" timestr="Wed Nov  4 04:01:57 2026" summary="Nmap done at Wed Nov  4 04:01:57 2026; 1 IP address (1 host up) scanned in 9.47 seconds" elapsed="9.47" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

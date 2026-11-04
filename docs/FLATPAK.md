@@ -23,7 +23,12 @@ what Flathub builds. This folder is the source of truth: change files here, then
 | `--filesystem=xdg-documents` | Reports and exported CVE database files are saved in Documents |
 | `--filesystem=xdg-download:ro` | Import an offline CVE database file from Downloads (read only) |
 
-The app never needs root inside or outside the sandbox. Settings, the CVE database and the cache go to the
+The app never needs root inside or outside the sandbox.
+
+**Nmap (optional engine, 1.4+) is not available in the Flatpak.** The sandbox cannot see programs installed
+on the computer, and reaching them would need `--talk-name=org.freedesktop.Flatpak` (`flatpak-spawn --host`),
+which is a full sandbox escape — so the Flatpak deliberately does without. The app says so where the Nmap
+features would be; everything else works the same. Use the .deb for Nmap features. Settings, the CVE database and the cache go to the
 app's private folder `~/.var/app/org.protonos.ProtonIpScanner/`.
 
 ## After each release

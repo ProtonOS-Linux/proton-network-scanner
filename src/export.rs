@@ -66,7 +66,7 @@ pub fn now_readable() -> String {
 /// Comma-separated values, one row per host.
 pub fn to_csv(hosts: &[Host]) -> String {
     let mut out = String::from(
-        "IP,Name,DNS name,NetBIOS name,mDNS/LLMNR name,UPnP name,Workgroup,MAC,Manufacturer,Response ms,Detected by,Open ports\r\n",
+        "IP,Name,DNS name,NetBIOS name,mDNS/LLMNR name,UPnP name,Workgroup,MAC,Manufacturer,Response ms,Detected by,Open ports,Operating system\r\n",
     );
     for h in hosts {
         let cells = [
@@ -82,6 +82,7 @@ pub fn to_csv(hosts: &[Host]) -> String {
             h.rtt.map(|d| format!("{:.1}", d.as_secs_f64() * 1000.0)).unwrap_or_default(),
             h.method.label().to_string(),
             ports_text(h),
+            h.os.clone().unwrap_or_default(),
         ];
         let row: Vec<String> = cells.iter().map(|c| csv_cell(c)).collect();
         out.push_str(&row.join(","));

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<scaninfo type="connect" protocol="tcp" numservices="1" services="18443"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1793782929" endtime="1793783069"><status state="up" reason="user-set" reason_ttl="0"/>
+<address addr="127.0.0.1" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="18443"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="http" product="OpenSSL s_server -www httpd" extrainfo="command line: s_server -accept 18443 -cert c.pem -key k.pem -www -quiet" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:openssl:openssl</cpe></service><script id="ssl-date" output="TLS randomness does not represent time"></script><script id="ssl-cert" output="Subject: commonName=old.lan&#xa;Not valid before: 2020-01-01T00:00:00&#xa;Not valid after:  2021-01-01T00:00:00"><table key="subject">
+<elem key="commonName">old.lan</elem>
+</table>
+<table key="issuer">
+<elem key="commonName">old.lan</elem>
+</table>
+<table key="pubkey">
+<elem key="type">rsa</elem>
+<elem key="bits">2048</elem>
+<elem key="modulus">B9B51B716661591986339B2AF1416B5160CFB2BF78A6286DED15DF8D70040C0C53149C8E6E1B837F2D6F27E08A8978E511592D9E47E73F026830348F655130980DE7F55177B9FD480ABF30263FBF419C3312C24A21A29CD0201CAFCB229EDD6FAF67C92E8777857BBFE767D684D85644FC322BB3C48E75098317391E89001A81FDE1CECEA7139D5BA85DA63F7781C6E2B20854144460BABAA52B5624D40E7E4016E73E5B1E31A860E6638E2C2206620C70BA3833B4EC718727D238D0A6A2F49AFB00CD332CFEB07D165D3AB42453DDC7E1EE6A59CC7A22E17602CB188EFEF0B98DBA0BAF448F2BE630D0BCAED57EE3AEDA5C9502EFAAA2F505BBB7D6FDD26C67</elem>
+<elem key="exponent">65537</elem>
+</table>
+<elem key="sig_algo">sha256WithRSAEncryption</elem>
+<table key="validity">
+<elem key="notBefore">2020-01-01T00:00:00</elem>
+<elem key="notAfter">2021-01-01T00:00:00</elem>
+</table>
+<elem key="md5">193ef7fa4863d049d82d66802a7d2db7</elem>
+<elem key="sha1">723217aaf49e3fb4906803bd07ddc7bdf590ac98</elem>
+<elem key="pem">-&#45;&#45;&#45;&#45;BEGIN CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;MIICnTCCAYWgAwIBAgIBATANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdvbGQu&#xa;bGFuMB4XDTIwMDEwMTAwMDAwMFoXDTIxMDEwMTAwMDAwMFowEjEQMA4GA1UEAwwH&#xa;b2xkLmxhbjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALm1G3FmYVkZ&#xa;hjObKvFBa1Fgz7K/eKYobe0V341wBAwMUxScjm4bg38tbyfgiol45RFZLZ5H5z8C&#xa;aDA0j2VRMJgN5/VRd7n9SAq/MCY/v0GcMxLCSiGinNAgHK/LIp7db69nyS6Hd4V7&#xa;v+dn1oTYVkT8MiuzxI51CYMXOR6JABqB/eHOzqcTnVuoXaY/d4HG4rIIVBREYLq6&#xa;pStWJNQOfkAW5z5bHjGoYOZjjiwiBmIMcLo4M7TscYcn0jjQpqL0mvsAzTMs/rB9&#xa;Fl06tCRT3cfh7mpZzHoi4XYCyxiO/vC5jboLr0SPK+Yw0Lyu1X7jrtpclQLvqqL1&#xa;Bbu31v3SbGcCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAXdRy/KWjYU1HHPEfskbT&#xa;oz6+LyRbnmpCjUSdZoSQVamIggHfxDF7dHRUeISQRl33Bk4Mq6Ww0thid/94LWG/&#xa;gsH55FwJsdjTWFv7MjXP6kPMetn36A3nOc+9GUKyBwkSl5AhTY2jfK/BT6B6bSC2&#xa;ttkScNHXnrsSZwu/Tyx83HjpiylcVUQtrZRb9zJKxMp3hJXG08VfJF+L1aS3mSVQ&#xa;Rs3UlA4e/hLsvcpyiSnRfUUyUlwg6NpjBPgXdVtOluJcreGycXz2hRTck0dSlFeN&#xa;nQbW2biLO32BZ7xR2b7gEU93fg6clJPhBxuLU/Dz1WlATGw8ZQOL48xO4C+0pf/L&#xa;4A==&#xa;-&#45;&#45;&#45;&#45;END CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;</elem>
+</script><script id="tls-ticketbleed" output="ERROR: Script execution failed (use -d to debug)"/></port>
+</ports>
+<times srtt="137" rttvar="5000" to="100000"/>
+</host>
+<runstats><finished time="1793783069" timestr="Wed Nov  4 04:04:29 2026" summary="Nmap done at Wed Nov  4 04:04:29 2026; 1 IP address (1 host up) scanned in 140.63 seconds" elapsed="140.63" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

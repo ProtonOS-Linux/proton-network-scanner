@@ -225,9 +225,69 @@ pub static DATABASE_EXPOSED: Check = Check {
                that need them.",
 };
 
+// ---- Checks interpreted from Nmap's safe NSE scripts (Nmap engine only) ----
+
+pub static SMB_SIGNING: Check = Check {
+    id: "PIS-0015",
+    title: "SMB signing not required",
+    vector: "CVSS:4.0/AV:A/AC:H/AT:P/PR:N/UI:N/VC:L/VI:H/VA:N/SC:N/SI:N/SA:N",
+    score: 6.0,
+    threat: 5.0,
+    description: "The file-sharing (SMB) server accepts connections without message signing. An attacker on the \
+                  network can intercept and relay SMB logins (NTLM relay) to read or change files as the victim.",
+    solution: "Require SMB signing: in Windows Group Policy enable 'Microsoft network server: Digitally sign \
+               communications (always)'; in Samba set 'server signing = mandatory'.",
+};
+
+pub static SSLV2: Check = Check {
+    id: "PIS-0016",
+    title: "Obsolete SSL 2.0 protocol supported",
+    vector: "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+    score: 6.3,
+    threat: 4.0,
+    description: "The service still accepts SSL 2.0, a protocol from 1995 with known cryptographic flaws (for \
+                  example the DROWN attack). Encrypted traffic may be decrypted by an attacker.",
+    solution: "Disable SSLv2 (and SSLv3) in the service's TLS settings and allow only TLS 1.2 and 1.3. On \
+               embedded devices, install the latest firmware.",
+};
+
+pub static CERT_EXPIRED: Check = Check {
+    id: "PIS-0017",
+    title: "TLS certificate expired",
+    vector: "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:P/VC:L/VI:L/VA:N/SC:N/SI:N/SA:N",
+    score: 2.3,
+    threat: 2.0,
+    description: "The certificate this service presents has expired. Browsers show a warning, and users who get \
+                  used to clicking through such warnings cannot notice a real man-in-the-middle attack.",
+    solution: "Renew the certificate (or let the device create a new one) and install it on the service.",
+};
+
+pub static HTTP_RISKY_METHODS: Check = Check {
+    id: "PIS-0018",
+    title: "Web server allows risky HTTP methods",
+    vector: "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:P/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N",
+    score: 5.3,
+    threat: 3.0,
+    description: "The web server announces methods such as PUT, DELETE or TRACE. If they are really enabled, files \
+                  could be uploaded or deleted, and TRACE can help steal cookies (cross-site tracing).",
+    solution: "Allow only the methods the site needs (usually GET, HEAD, POST) in the web server configuration.",
+};
+
+pub static X11_OPEN: Check = Check {
+    id: "PIS-0019",
+    title: "X11 display server accepts connections from anyone",
+    vector: "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N",
+    score: 9.3,
+    threat: 7.0,
+    description: "The graphical display (X11) on this computer lets any device connect. An attacker can capture \
+                  the screen and every key typed, and inject keystrokes.",
+    solution: "Turn off TCP connections for the X server (the default on modern systems, '-nolisten tcp') and \
+               remove any 'xhost +' setting.",
+};
+
 /// Every check (used by the tests to verify ids, vectors and scores).
 #[cfg(test)]
-pub fn all() -> [&'static Check; 14] {
+pub fn all() -> [&'static Check; 19] {
     [
         &TELNET,
         &FTP_ANONYMOUS,
@@ -243,6 +303,11 @@ pub fn all() -> [&'static Check; 14] {
         &VERSION_DISCLOSED,
         &FTP_CLEARTEXT,
         &DATABASE_EXPOSED,
+        &SMB_SIGNING,
+        &SSLV2,
+        &CERT_EXPIRED,
+        &HTTP_RISKY_METHODS,
+        &X11_OPEN,
     ]
 }
 

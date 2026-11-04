@@ -25,6 +25,15 @@ use crate::vuln::offline::{self, DbInfo, OfflineDb};
 use crate::vuln::score::Severity;
 use crate::vuln::{self, CveSource, Finding, TopItem, VulnEvent, VulnJob, VulnOptions};
 
+const NMAP_HELP: &str = "Nmap identifies services and versions more precisely and runs its SAFE scripts only\n\
+     (no exploits, no password guessing, no denial of service, nothing contacts the internet).\n\
+     Proton's own configuration checks run as well. Runs as your user, no admin rights.";
+
+const DEEP_HELP: &str = "Deep scan: SYN port scan + operating-system detection.\n\
+     Linux: asks for the administrator password for this one Nmap run (pkexec), and only\n\
+     for an Nmap installed by your package manager. Nothing keeps running as admin.\n\
+     Windows: uses the Npcap driver, no elevation.";
+
 /// Port lists for the assessment. The last entry is the user's own list.
 const PORT_PRESETS: [(&str, &str, &str); 4] = [
     (
@@ -91,13 +100,19 @@ pub struct VulnTab {
     speed: Speed,
     cve_source: CveSource,
     safe_logins: bool,
+    /// Scan engine (Nmap only when installed) and its deep-scan option.
+    engine: vuln::Engine,
+    deep: bool,
+    /// Nmap found on this computer (looked up when the tab is created).
+    nmap: Option<crate::nmap::NmapInfo>,
     /// Installed offline database (shown in the Database menu).
     db_info: Option<DbInfo>,
     db_job: Option<DbJob>,
 
     job: Option<VulnJob>,
-    /// Description of the last scan's scope, for reports.
-    scope: Option<(String, Speed, CveSource)>,
+    /// Description of the last scan's scope, for reports: targets,
+    /// speed + engine, CVE source.
+    scope: Option<(String, String, CveSource)>,
     services: Vec<Service>,
     findings: Vec<Finding>,
     hosts: usize,
@@ -124,6 +139,9 @@ impl VulnTab {
             speed: Speed::Normal,
             cve_source: CveSource::Online,
             safe_logins: true,
+            engine: vuln::Engine::Builtin,
+            deep: false,
+            nmap: crate::nmap::find(),
             db_info: offline::installed_info(),
             db_job: None,
             job: None,
@@ -145,6 +163,14 @@ impl VulnTab {
 
     pub fn busy(&self) -> bool {
         self.job.is_some()
+    }
+
+    /// Nmap was installed or removed (Settings → Look again).
+    pub fn set_nmap(&mut self, nmap: Option<crate::nmap::NmapInfo>) {
+        if nmap.is_none() {
+            self.engine = vuln::Engine::Builtin;
+        }
+        self.nmap = nmap;
     }
 
     fn ports_text(&self) -> &str {
@@ -199,7 +225,12 @@ impl VulnTab {
         // Every assessment starts from a clean slate: no results, notes or
         // filters from an earlier scan, and no cached lookups (see vuln::nvd).
         self.clear();
-        self.scope = Some((desc, self.speed, self.cve_source));
+        if self.engine == vuln::Engine::Nmap && self.nmap.is_none() {
+            return self.toast =
+                Some(("Nmap is not installed. Install it, or choose the built-in engine.".into(), true));
+        }
+        let deep = self.engine == vuln::Engine::Nmap && self.deep;
+        self.scope = Some((desc, vuln::engine_label(self.speed, self.engine, deep), self.cve_source));
         self.job = Some(vuln::start(VulnOptions {
             targets,
             discover_first,
@@ -210,6 +241,8 @@ impl VulnTab {
             safe_logins: self.safe_logins,
             nvd_api_key: net.nvd_api_key.clone(),
             nets: net.nets.to_vec(),
+            engine: self.engine,
+            deep,
         }));
     }
 
@@ -265,11 +298,12 @@ impl VulnTab {
         if self.findings.is_empty() && self.services.is_empty() {
             return None;
         }
-        let (targets, speed, source) = self.scope.clone().unwrap_or_else(|| ("—".into(), self.speed, self.cve_source));
+        let (targets, speed, source) =
+            self.scope.clone().unwrap_or_else(|| ("—".into(), self.speed.label().into(), self.cve_source));
         Some(ReportData {
             generated: export::now_readable(),
             targets: if self.demo { format!("{targets} (DEMO DATA)") } else { targets },
-            speed: speed.label().into(),
+            speed,
             duration_secs: self.duration_secs,
             hosts: self.hosts,
             cve_data: vuln::cve_data_label(source),
@@ -349,6 +383,8 @@ impl VulnTab {
             {
                 self.clear();
             }
+            ui.separator();
+            self.engine_picker(ui);
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 self.database_menu(ui, net);
                 ui.menu_button("💾 Export report ⏷", |ui| {
@@ -415,6 +451,46 @@ impl VulnTab {
             });
         });
         ui.add_space(10.0);
+    }
+
+    /// "Engine [Built-in ▾] ☐ Deep scan" — Nmap is offered when installed.
+    fn engine_picker(&mut self, ui: &mut egui::Ui) {
+        let busy = self.busy();
+        ui.add_enabled_ui(!busy, |ui| {
+            toolbar_label(ui, "Engine");
+            let nmap_label = match &self.nmap {
+                Some(n) => n.label(),
+                None => "Nmap (not installed)".into(),
+            };
+            egui::ComboBox::from_id_salt("vuln-engine")
+                .width(150.0)
+                .selected_text(match self.engine {
+                    vuln::Engine::Builtin => "Built-in".to_string(),
+                    vuln::Engine::Nmap => nmap_label.clone(),
+                })
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(&mut self.engine, vuln::Engine::Builtin, "Built-in")
+                        .on_hover_text("Proton's own service detection and configuration checks. Needs nothing else.");
+                    ui.add_enabled_ui(self.nmap.is_some(), |ui| {
+                        ui.selectable_value(&mut self.engine, vuln::Engine::Nmap, nmap_label)
+                            .on_hover_text(NMAP_HELP)
+                            .on_disabled_hover_text(crate::nmap::missing_text());
+                    });
+                })
+                .response
+                .on_hover_text(if self.engine == vuln::Engine::Nmap {
+                    NMAP_HELP
+                } else {
+                    "How services are identified"
+                });
+            if self.engine == vuln::Engine::Nmap {
+                ui.checkbox(&mut self.deep, "Deep scan").on_hover_text(DEEP_HELP);
+            }
+            if self.nmap.is_none() && !crate::nmap::in_flatpak() {
+                ui.hyperlink_to("Get Nmap", crate::nmap::DOWNLOAD_URL)
+                    .on_hover_text("Optional. After installing, use Settings → Look again.");
+            }
+        });
     }
 
     /// "Database" menu: status of the offline database, download, export, import.
@@ -942,7 +1018,11 @@ impl VulnTab {
                         ui.label(s.products.iter().map(|p| p.label()).collect::<Vec<_>>().join(", "));
                     });
                     row.col(|ui| {
-                        ui.label(RichText::new(s.banner.as_deref().unwrap_or("")).monospace().weak());
+                        let r = ui.label(RichText::new(s.banner.as_deref().unwrap_or("")).monospace().weak());
+                        if !s.nse.is_empty() {
+                            let text: Vec<String> = s.nse.iter().map(|(id, out)| format!("{id}:\n{out}")).collect();
+                            r.on_hover_text(RichText::new(text.join("\n\n")).monospace());
+                        }
                     });
                 });
             });
@@ -1012,6 +1092,21 @@ impl VulnTab {
             if !f.evidence.is_empty() {
                 section(ui, "Evidence", &f.evidence);
             }
+            let nse = self
+                .services
+                .iter()
+                .find(|s| s.ip == f.ip && s.port == f.port)
+                .map(|s| s.nse.clone())
+                .unwrap_or_default();
+            if !nse.is_empty() {
+                ui.add_space(10.0);
+                ui.label(RichText::new("Nmap script results on this port").strong());
+                for (id, out) in &nse {
+                    egui::CollapsingHeader::new(RichText::new(id).monospace()).id_salt(("nse", id)).show(ui, |ui| {
+                        copy_value(ui, RichText::new(out).monospace().small(), out);
+                    });
+                }
+            }
             if !f.references.is_empty() {
                 ui.add_space(10.0);
                 ui.label(RichText::new("References").strong());
@@ -1038,6 +1133,7 @@ impl VulnTab {
                 name: "SSH".into(),
                 products: vec![prod("OpenSSH", "8.9p1")],
                 banner: Some("SSH-2.0-OpenSSH_8.9p1".into()),
+                nse: vec![("ssh-hostkey".into(), "256 a1:b2:c3:d4 (ECDSA)\n256 e5:f6:07:18 (ED25519)".into())],
             },
             Service {
                 ip: ip(10),
@@ -1045,6 +1141,7 @@ impl VulnTab {
                 name: "HTTP (web)".into(),
                 products: vec![prod("Apache httpd", "2.4.49")],
                 banner: Some("Server: Apache/2.4.49 (Unix)".into()),
+                nse: vec![],
             },
             Service {
                 ip: ip(10),
@@ -1052,15 +1149,17 @@ impl VulnTab {
                 name: "Redis".into(),
                 products: vec![prod("Redis", "6.0.16")],
                 banner: None,
+                nse: vec![],
             },
-            Service { ip: ip(52), port: 23, name: "Telnet".into(), products: vec![], banner: None },
-            Service { ip: ip(52), port: 80, name: "HTTP (web)".into(), products: vec![], banner: None },
+            Service { ip: ip(52), port: 23, name: "Telnet".into(), products: vec![], banner: None, nse: vec![] },
+            Service { ip: ip(52), port: 80, name: "HTTP (web)".into(), products: vec![], banner: None, nse: vec![] },
             Service {
                 ip: ip(60),
                 port: 21,
                 name: "FTP".into(),
                 products: vec![prod("vsftpd", "3.0.3")],
                 banner: Some("220 (vsFTPd 3.0.3)".into()),
+                nse: vec![],
             },
         ];
         let cve = |id: &str,
@@ -1171,7 +1270,11 @@ impl VulnTab {
         self.hosts = 3;
         self.duration_secs = 41.0;
         self.demo = true;
-        self.scope = Some(("192.168.1.1-254".into(), Speed::Normal, CveSource::Online));
+        if self.nmap.is_some() {
+            self.engine = vuln::Engine::Nmap;
+        }
+        self.scope =
+            Some(("192.168.1.1-254".into(), vuln::engine_label(Speed::Normal, self.engine, false), CveSource::Online));
         self.resort();
         self.selected = self.findings.iter().position(|f| f.id == "CVE-2021-42013");
     }

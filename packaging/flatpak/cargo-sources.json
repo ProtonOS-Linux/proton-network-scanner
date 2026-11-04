@@ -3135,6 +3135,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/roxmltree/roxmltree-0.21.2.crate",
+        "sha256": "9da7f59328b09405b181fee1018925fad50f157afb43c0c0f5c522c256dd5907",
+        "dest": "cargo/vendor/roxmltree-0.21.2"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"9da7f59328b09405b181fee1018925fad50f157afb43c0c0f5c522c256dd5907\", \"files\": {}}",
+        "dest": "cargo/vendor/roxmltree-0.21.2",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/rust_xlsxwriter/rust_xlsxwriter-0.102.0.crate",
         "sha256": "6ca3d0e879a578c1313c2800ab0c6c029d38eed18098675e50341a30d32372ed",
         "dest": "cargo/vendor/rust_xlsxwriter-0.102.0"

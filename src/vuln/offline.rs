@@ -193,6 +193,11 @@ impl OfflineDb {
         Ok(info)
     }
 
+    /// A CVE by id, if the database has it.
+    pub fn by_id(&self, id: &str) -> Option<CveRecord> {
+        self.cves.iter().find(|c| c.id == id).cloned()
+    }
+
     /// CVEs whose version rules cover this product CPE
     /// (`cpe:2.3:a:vendor:product:version:update:…`).
     pub fn lookup(&self, cpe: &str) -> Vec<CveRecord> {

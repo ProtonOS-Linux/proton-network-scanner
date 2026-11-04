@@ -4,6 +4,7 @@
 //! proton-ip-scanner --scan 192.168.1.0/24
 //! proton-ip-scanner --scan 192.168.1.1-254 --ports 22,80,443 --csv
 //! proton-ip-scanner --scan auto --vuln --report pdf
+//! proton-ip-scanner --scan auto --vuln --nmap --deep
 //! ```
 
 use std::io::Write;
@@ -36,6 +37,10 @@ Options:
   --no-names         skip DNS, NetBIOS, mDNS and LLMNR name lookups
   --slow             polite, slower probing (fewer parallel probes, random pauses)
   --csv              print results as CSV instead of a table
+  --nmap             identify services and the operating system with Nmap (if installed;
+                     safe scripts only). With --vuln: use Nmap as the scan engine
+  --deep             with --nmap: SYN scan + OS detection. Asks for the administrator
+                     password (Linux, pkexec) for this one Nmap run only
 
 Vulnerability assessment (--vuln):
   --vuln             find services and check them for known vulnerabilities
@@ -78,6 +83,7 @@ fn run_inner(args: &[String]) -> Result<(), String> {
     let mut csv = false;
     let (mut vuln, mut report, mut logins, mut ports_given) = (false, None::<String>, true, false);
     let mut cve = crate::vuln::CveSource::Online;
+    let (mut use_nmap, mut deep) = (false, false);
 
     let mut it = args.iter();
     while let Some(arg) = it.next() {
@@ -98,6 +104,8 @@ fn run_inner(args: &[String]) -> Result<(), String> {
                 ports_given = true;
             }
             "--vuln" => vuln = true,
+            "--nmap" => use_nmap = true,
+            "--deep" => deep = true,
             "--report" => {
                 let r = value("--report")?;
                 if r != "pdf" && r != "xlsx" {
@@ -146,6 +154,15 @@ fn run_inner(args: &[String]) -> Result<(), String> {
         print!("{HELP}");
         return Ok(());
     };
+    if deep && !use_nmap {
+        return Err("--deep needs --nmap".into());
+    }
+    if use_nmap {
+        match crate::nmap::find() {
+            Some(n) => eprintln!("Using {} ({}).", n.label(), n.path.display()),
+            None => return Err(format!("--nmap: Nmap is not installed (get it from {})", crate::nmap::DOWNLOAD_URL)),
+        }
+    }
 
     let nets = scanner::local_networks();
     let range = if range == "auto" {
@@ -161,7 +178,9 @@ fn run_inner(args: &[String]) -> Result<(), String> {
             (true, Some(p)) => p,
             _ => scanner::range::parse_ports(scanner::ports::PRESET_VULN)?,
         };
-        return run_vuln(ips, range, ports, settings.speed, cve, logins, report.as_deref(), nets);
+        let engine = if use_nmap { crate::vuln::Engine::Nmap } else { crate::vuln::Engine::Builtin };
+        let opts = VulnCli { speed: settings.speed, cve_source: cve, safe_logins: logins, engine, deep };
+        return run_vuln(ips, range, ports, opts, report.as_deref(), nets);
     }
 
     eprintln!("Scanning {} address(es) ({range})…", ips.len());
@@ -194,7 +213,7 @@ fn run_inner(args: &[String]) -> Result<(), String> {
         for h in &mut hosts {
             h.ports = Some(Vec::new());
         }
-        let job = scanner::start_port_scan(targets, ports, &settings)?;
+        let job = scanner::start_port_scan(targets, ports.clone(), &settings)?;
         for ev in job.rx.iter() {
             match ev {
                 Event::OpenPort(ip, p) => {
@@ -208,6 +227,9 @@ fn run_inner(args: &[String]) -> Result<(), String> {
         }
         for list in hosts.iter_mut().filter_map(|h| h.ports.as_mut()) {
             list.sort_by_key(|p| p.port);
+        }
+        if use_nmap {
+            nmap_identify(&mut hosts, &ports, settings.speed, deep)?;
         }
     }
 
@@ -232,6 +254,9 @@ fn table(hosts: &[Host]) -> String {
             truncate(h.display_name(), 26),
             h.vendor.unwrap_or("")
         ));
+        if let Some(os) = &h.os {
+            s.push_str(&format!("    OS: {os}\n"));
+        }
         if let Some(ports) = &h.ports {
             for p in ports {
                 let banner = p.banner.as_deref().map(|b| format!("  \"{b}\"")).unwrap_or_default();
@@ -246,20 +271,59 @@ fn truncate(s: &str, n: usize) -> String {
     if s.chars().count() <= n { s.to_string() } else { s.chars().take(n - 1).chain(['…']).collect() }
 }
 
+/// `--nmap` on a network scan: let Nmap identify the devices with open ports
+/// (deep: every device, every listed port, with OS detection).
+fn nmap_identify(hosts: &mut [Host], ports: &[u16], speed: scanner::Speed, deep: bool) -> Result<(), String> {
+    let targets: Vec<Ipv4Addr> =
+        hosts.iter().filter(|h| deep || h.ports.as_ref().is_some_and(|p| !p.is_empty())).map(|h| h.ip).collect();
+    let mut found: Vec<u16> = hosts.iter().flat_map(|h| h.ports.iter().flatten().map(|p| p.port)).collect();
+    found.sort_unstable();
+    found.dedup();
+    let ports = if deep { ports.to_vec() } else { found };
+    if targets.is_empty() || ports.is_empty() {
+        return Ok(());
+    }
+    eprintln!("Identifying {} device(s) with Nmap{}…", targets.len(), if deep { " (deep scan)" } else { "" });
+    let req = crate::nmap::Request { targets, ports, speed, deep, scripts: crate::nmap::Scripts::Identify };
+    let cancel = std::sync::atomic::AtomicBool::new(false);
+    crate::nmap::run(&req, &cancel, |ev| {
+        if let crate::nmap::Event::Host(n) = ev
+            && let Some(h) = hosts.iter_mut().find(|h| Some(h.ip) == n.ip)
+        {
+            crate::nmap::apply_to_host(h, &n);
+        }
+    })
+    .map(|_| ())
+    .map_err(|e| format!("Nmap: {e}"))
+}
+
+/// Assessment options from the command line.
+struct VulnCli {
+    speed: scanner::Speed,
+    cve_source: crate::vuln::CveSource,
+    safe_logins: bool,
+    engine: crate::vuln::Engine,
+    deep: bool,
+}
+
 /// `--vuln`: run an assessment and print the findings (most urgent first).
-#[allow(clippy::too_many_arguments)]
 fn run_vuln(
     ips: Vec<Ipv4Addr>,
     range: String,
     ports: Vec<u16>,
-    speed: scanner::Speed,
-    cve_source: crate::vuln::CveSource,
-    safe_logins: bool,
+    o: VulnCli,
     report: Option<&str>,
     nets: Vec<scanner::LocalNet>,
 ) -> Result<(), String> {
     use crate::vuln::{self, VulnEvent, VulnOptions};
-    eprintln!("Vulnerability assessment of {range} ({} ports, {})…", ports.len(), speed.label());
+    let VulnCli { speed, cve_source, safe_logins, engine, deep } = o;
+    eprintln!(
+        "Vulnerability assessment of {range} ({} ports, {}, {} engine{})…",
+        ports.len(),
+        speed.label(),
+        engine.label(),
+        if deep { ", deep" } else { "" }
+    );
     let job = vuln::start(VulnOptions {
         targets: ips,
         discover_first: true,
@@ -270,6 +334,8 @@ fn run_vuln(
         safe_logins,
         nvd_api_key: std::env::var("NVD_API_KEY").ok(),
         nets,
+        engine,
+        deep,
     });
     let (mut findings, mut services, mut notes, mut hosts) = (Vec::new(), Vec::new(), Vec::new(), 0usize);
     let mut last_phase = None;
@@ -317,7 +383,7 @@ fn run_vuln(
         let data = crate::report::ReportData {
             generated: export::now_readable(),
             targets: range,
-            speed: speed.label().into(),
+            speed: vuln::engine_label(speed, engine, deep),
             duration_secs: job.elapsed().as_secs_f64(),
             hosts,
             cve_data: crate::vuln::cve_data_label(cve_source),

@@ -25,6 +25,7 @@ mod cli;
 mod config;
 mod export;
 mod icon;
+mod nmap;
 mod report;
 mod scanner;
 mod vuln;

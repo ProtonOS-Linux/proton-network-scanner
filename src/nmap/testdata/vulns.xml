@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<nmaprun scanner="nmap" args="test" version="7.94SVN" xmloutputversion="1.05">
+<taskprogress task="Service scan" time="1793782910" percent="50.00" remaining="5" etc="1793782915"/>
+<host starttime="1793782907" endtime="1793782917"><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.1.20" addrtype="ipv4"/>
+<address addr="00:11:32:AA:BB:CC" addrtype="mac" vendor="Synology Incorporated"/>
+<hostnames>
+<hostname name="nas.lan" type="PTR"/>
+</hostnames>
+<ports><extraports state="closed" count="48"><extrareasons reason="reset" count="48" proto="tcp" ports="1-20"/></extraports>
+<port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="http" product="nginx" version="1.18.0" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:igor_sysoev:nginx:1.18.0</cpe></service><script id="ssl-heartbleed" output="&#xa;  VULNERABLE:&#xa;  The Heartbleed Bug is a serious vulnerability in the popular OpenSSL cryptographic software library.&#xa;    State: VULNERABLE"><table key="CVE-2014-0160">
+<elem key="title">The Heartbleed Bug is a serious vulnerability in the popular OpenSSL cryptographic software library.</elem>
+<elem key="state">VULNERABLE</elem>
+<table key="ids">
+<elem>CVE:CVE-2014-0160</elem>
+</table>
+<table key="description">
+<elem>OpenSSL versions 1.0.1 and 1.0.2-beta releases (including 1.0.1f and 1.0.2-beta1) of OpenSSL are affected by the Heartbleed bug.</elem>
+</table>
+<elem key="disclosure">2014-04-07</elem>
+<table key="refs">
+<elem>https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-0160</elem>
+<elem>javascript:alert(1)</elem>
+</table>
+</table>
+</script><script id="ssl-poodle" output="NOT VULNERABLE"><table key="CVE-2014-3566">
+<elem key="title">SSL POODLE information leak</elem>
+<elem key="state">NOT VULNERABLE</elem>
+</table>
+</script><script id="http-methods" output="&#xa;  Supported Methods: GET HEAD POST OPTIONS PUT DELETE&#xa;  Potentially risky methods: PUT DELETE"><table key="Supported Methods">
+<elem>GET</elem>
+<elem>PUT</elem>
+</table>
+<table key="Potentially risky methods">
+<elem>PUT</elem>
+<elem>DELETE</elem>
+</table>
+</script><script id="sslv2" output="&#xa;  SSLv2 supported&#xa;  ciphers: none"/></port>
+<port protocol="tcp" portid="445"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="netbios-ssn" product="Samba smbd" version="4.6.2" method="probed" conf="10"><cpe>cpe:/a:samba:samba</cpe></service></port>
+<port protocol="tcp" portid="6000"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="X11" method="probed" conf="10"/><script id="x11-access" output="X server access is granted"/></port>
+<port protocol="tcp" portid="8080"><state state="filtered" reason="no-response" reason_ttl="0"/></port>
+<port protocol="udp" portid="161"><state state="open" reason="udp-response" reason_ttl="64"/><service name="snmp"/></port>
+</ports>
+<os><portused state="open" proto="tcp" portid="443"/>
+<osmatch name="Linux 4.15 - 5.8" accuracy="96" line="67000">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="4.X" accuracy="96"><cpe>cpe:/o:linux:linux_kernel:4</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 2.6.32" accuracy="90" line="1"/>
+</os>
+<hostscript><script id="smb2-security-mode" output="&#xa;  3:1:1: &#xa;    Message signing enabled but not required"><table key="3:1:1">
+<elem>Message signing enabled but not required</elem>
+</table>
+</script><script id="smb-vuln-ms17-010" output="&#xa;  VULNERABLE:"><table key="NMAP-1">
+<elem key="title">Remote Code Execution vulnerability in Microsoft SMBv1 servers (ms17-010)</elem>
+<elem key="state">LIKELY VULNERABLE</elem>
+<elem key="risk_factor">HIGH</elem>
+<table key="ids">
+<elem>CVE:CVE-2017-0143</elem>
+</table>
+</table>
+</script></hostscript>
+</host>
+<host starttime="1" endtime="2"><status state="down" reason="no-response" reason_ttl="0"/>
+<address addr="192.168.1.21" addrtype="ipv4"/>
+</host>
+<runstats><finished time="1793782917" timestr="x" summary="done" elapsed="9.47" exit="success"/><hosts up="1" down="1" total="2"/>
+</runstats>
+</nmaprun>

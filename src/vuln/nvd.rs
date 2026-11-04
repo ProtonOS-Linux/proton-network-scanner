@@ -161,6 +161,22 @@ impl VulnDb {
         Ok(out)
     }
 
+    /// One CVE by its id (for vulnerabilities an Nmap script confirmed).
+    pub fn cve_by_id(&mut self, id: &str, cancel: &AtomicBool) -> Result<Option<CveRecord>, String> {
+        if !is_cve_id(id) {
+            return Ok(None);
+        }
+        let (status, body) = self.nvd_get(&format!("{NVD_URL}?cveId={id}"), cancel)?;
+        if status == 404 {
+            return Ok(None);
+        }
+        if status != 200 {
+            return Err(format!("NVD answered HTTP {status}"));
+        }
+        let v: Value = serde_json::from_str(&body).map_err(|e| format!("NVD sent invalid data: {e}"))?;
+        Ok(parse_nvd(&v).1.into_iter().find(|r| r.id == id))
+    }
+
     /// EPSS scores for these CVE ids (missing ids simply have no score yet).
     pub fn epss(&mut self, ids: &[String], cancel: &AtomicBool) -> Result<HashMap<String, Epss>, String> {
         let mut out = HashMap::new();

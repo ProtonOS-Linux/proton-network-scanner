@@ -185,6 +185,10 @@ pub struct Host {
     pub workgroup: Option<String>,
     /// `None` = ports not scanned yet; `Some(list)` = scanned (list may be empty).
     pub ports: Option<Vec<OpenPort>>,
+    /// Operating system, from Nmap ("Identify with Nmap").
+    pub os: Option<String>,
+    /// Output of Nmap's identification scripts: `("443 ssl-cert", output)`.
+    pub nmap_scripts: Vec<(String, String)>,
 }
 
 impl Host {
@@ -615,6 +619,8 @@ fn discover(ip: Ipv4Addr, ctx: &DiscoveryCtx) -> Option<Host> {
         upnp_name: asked.upnp_name,
         workgroup,
         ports: None,
+        os: None,
+        nmap_scripts: Vec::new(),
     })
     .map(|mut h| {
         // Names the multicast sweep already found for this address.

@@ -65,6 +65,19 @@ enum SortCol {
     Ports,
 }
 
+/// A running "Identify with Nmap" job.
+struct NmapJob {
+    cancel: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    rx: std::sync::mpsc::Receiver<Result<crate::nmap::Event, (String, crate::nmap::Summary)>>,
+    started: Instant,
+    targets: usize,
+    identified: usize,
+    deep: bool,
+    /// Current Nmap task and percent, for the status bar.
+    task: String,
+    pct: f32,
+}
+
 /// A short message shown in the status bar for a few seconds.
 struct Toast {
     text: String,
@@ -93,6 +106,10 @@ pub struct App {
     index: HashMap<Ipv4Addr, usize>,
 
     job: Option<(Job, JobKind)>,
+    /// "Identify with Nmap" (optional engine; see `crate::nmap`).
+    nmap_job: Option<NmapJob>,
+    nmap: Option<crate::nmap::NmapInfo>,
+    nmap_deep: bool,
     /// Summary of the last finished scan, shown in the status bar.
     last_summary: Option<String>,
 
@@ -134,6 +151,9 @@ impl App {
             swept: HashMap::new(),
             index: HashMap::new(),
             job: None,
+            nmap_job: None,
+            nmap: crate::nmap::find(),
+            nmap_deep: false,
             last_summary: None,
             selected: None,
             filter: String::new(),
@@ -191,6 +211,8 @@ impl App {
                 ports: ports.map(|ps| {
                     ps.iter().map(|&p| OpenPort { port: p, service: ports::service_name(p), banner: None }).collect()
                 }),
+                os: None,
+                nmap_scripts: Vec::new(),
             }
         };
         let demo = [
@@ -209,7 +231,28 @@ impl App {
             mk(52, [0x00, 0x00, 0x48, 0x77, 0x88, 0x99], "PRINTER", Role::Device, Some(4), Some(&[80, 631, 9100])),
             mk(60, [0xDC, 0xA6, 0x32, 0x12, 0x34, 0x56], "PIHOLE", Role::Device, Some(1), Some(&[22, 53, 80])),
         ];
-        for h in demo {
+        for mut h in demo {
+            // What "Identify with Nmap" (deep scan) adds, for the demo server.
+            if h.ip.octets()[3] == 10 {
+                h.os = Some("Linux 5.0 - 6.2 (98%, general purpose)".into());
+                let versions = [
+                    (22, "OpenSSH 9.6p1 Ubuntu 3ubuntu13.5 (Ubuntu Linux; protocol 2.0)"),
+                    (80, "nginx 1.24.0 (Ubuntu)"),
+                    (445, "Samba smbd 4.6.2"),
+                    (32400, "Plex Media Server httpd"),
+                ];
+                for p in h.ports.iter_mut().flatten() {
+                    p.banner = versions.iter().find(|v| v.0 == p.port).map(|v| v.1.to_string());
+                }
+                h.nmap_scripts = vec![
+                    ("smb2-security-mode".into(), "3:1:1:\nMessage signing enabled but not required".into()),
+                    (
+                        "22 ssh-hostkey".into(),
+                        "256 a1:b2:c3:d4:e5:f6:07:18 (ECDSA)\n256 19:2a:3b:4c:5d:6e:7f:80 (ED25519)".into(),
+                    ),
+                    ("80 http-title".into(), "Welcome to nginx!".into()),
+                ];
+            }
             self.index.insert(h.ip, self.hosts.len());
             self.hosts.push(h);
         }
@@ -219,7 +262,7 @@ impl App {
     }
 
     fn busy(&self) -> bool {
-        self.job.is_some()
+        self.job.is_some() || self.nmap_job.is_some()
     }
 
     /// Open the ping test window for `ip`.
@@ -287,6 +330,103 @@ impl App {
     fn stop(&mut self) {
         if let Some((job, _)) = &self.job {
             job.cancel();
+        }
+        if let Some(j) = &self.nmap_job {
+            j.cancel.store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
+    /// "Identify with Nmap": service versions, OS (deep) and safe
+    /// identification scripts for `targets`. Normal mode checks the ports
+    /// already found open (or the Ports list if none were scanned); deep mode
+    /// SYN-scans the Ports list and asks for admin rights for that one run.
+    fn start_nmap(&mut self, targets: Vec<Ipv4Addr>) {
+        if self.busy() {
+            return;
+        }
+        if self.nmap.is_none() {
+            return self.notify("Nmap is not installed. Get it from nmap.org, then use Settings → Look again.", true);
+        }
+        if targets.is_empty() {
+            return self.notify("Find some devices first.", true);
+        }
+        let listed = match range::parse_ports(&self.ports_text) {
+            Ok(p) => p,
+            Err(e) => return self.notify(e, true),
+        };
+        let mut found: Vec<u16> = targets
+            .iter()
+            .filter_map(|ip| self.index.get(ip))
+            .flat_map(|&i| self.hosts[i].ports.iter().flatten().map(|p| p.port))
+            .collect();
+        found.sort_unstable();
+        found.dedup();
+        let deep = self.nmap_deep;
+        let ports = if deep || found.is_empty() { listed } else { found };
+        let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let req = crate::nmap::Request {
+            targets: targets.clone(),
+            ports,
+            speed: self.settings.speed,
+            deep,
+            scripts: crate::nmap::Scripts::Identify,
+        };
+        let rx = crate::nmap::spawn(req, cancel.clone());
+        self.nmap_job = Some(NmapJob {
+            cancel,
+            rx,
+            started: Instant::now(),
+            targets: targets.len(),
+            identified: 0,
+            deep,
+            task: if deep && cfg!(target_os = "linux") {
+                "waiting for administrator approval".into()
+            } else {
+                "starting".into()
+            },
+            pct: 0.0,
+        });
+    }
+
+    /// Apply Nmap results as they arrive (called every frame).
+    fn poll_nmap(&mut self) {
+        let Some(job) = &mut self.nmap_job else { return };
+        let mut done: Option<(String, crate::nmap::Summary)> = None;
+        for _ in 0..256 {
+            match job.rx.try_recv() {
+                Ok(Ok(crate::nmap::Event::Progress(task, pct))) => {
+                    job.task = task;
+                    job.pct = pct;
+                }
+                Ok(Ok(crate::nmap::Event::Host(n))) => {
+                    if let Some(&i) = n.ip.as_ref().and_then(|ip| self.index.get(ip)) {
+                        crate::nmap::apply_to_host(&mut self.hosts[i], &n);
+                        job.identified += 1;
+                    }
+                }
+                Ok(Err(end)) => {
+                    done = Some(end);
+                    break;
+                }
+                Err(std::sync::mpsc::TryRecvError::Empty) => break,
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                    done = Some(("Nmap stopped unexpectedly".into(), Default::default()));
+                    break;
+                }
+            }
+        }
+        if let Some((err, summary)) = done {
+            let secs = job.started.elapsed().as_secs_f64();
+            let (identified, targets) = (job.identified, job.targets);
+            self.nmap_job = None;
+            if !err.is_empty() {
+                self.notify(format!("Nmap: {err}"), true);
+            } else {
+                self.last_summary = Some(format!(
+                    "Nmap identified {identified} of {targets} device(s) in {secs:.0} s{}",
+                    if summary.cancelled { " (stopped)" } else { "" }
+                ));
+            }
         }
     }
 
@@ -541,8 +681,50 @@ impl App {
             {
                 self.open_ping(&ui.ctx().clone(), ip);
             }
+            ui.separator();
+            self.nmap_menu(ui);
         });
         ui.add_space(10.0);
+    }
+
+    /// "🔬 Identify with Nmap ⏷" (or a "Get Nmap" link when it is missing).
+    fn nmap_menu(&mut self, ui: &mut egui::Ui) {
+        if self.nmap.is_none() {
+            ui.add_enabled(false, tool_button("🔬 Identify with Nmap"))
+                .on_disabled_hover_text(crate::nmap::missing_text());
+            if !crate::nmap::in_flatpak() {
+                ui.hyperlink_to("Get Nmap", crate::nmap::DOWNLOAD_URL);
+            }
+            return;
+        }
+        let enabled = !self.busy() && !self.hosts.is_empty();
+        ui.add_enabled_ui(enabled, |ui| {
+            ui.menu_button("🔬 Identify with Nmap ⏷", |ui| {
+                ui.set_min_width(300.0);
+                if let Some(n) = &self.nmap {
+                    ui.label(RichText::new(format!("{} · safe scripts only", n.label())).weak());
+                }
+                ui.checkbox(&mut self.nmap_deep, "Deep scan (OS detection, needs admin)").on_hover_text(
+                    "SYN scan + operating-system detection.\n\
+                     Linux: asks for the administrator password for this one Nmap run (pkexec).\n\
+                     Windows: uses the Npcap driver. Nothing keeps running as admin.",
+                );
+                ui.separator();
+                let sel = self.selected;
+                if ui.add_enabled(sel.is_some(), egui::Button::new("Selected device")).clicked() {
+                    self.start_nmap(sel.into_iter().collect());
+                    ui.close();
+                }
+                if ui.button(format!("All live devices ({})", self.hosts.len())).clicked() {
+                    let all = self.hosts.iter().map(|h| h.ip).collect();
+                    self.start_nmap(all);
+                    ui.close();
+                }
+            })
+            .response
+            .on_hover_text("Find the operating system, exact service versions and device details with Nmap")
+            .on_disabled_hover_text("Run a scan first");
+        });
     }
 
     fn status_bar(&mut self, ui: &mut egui::Ui) {
@@ -550,6 +732,17 @@ impl App {
         ui.horizontal(|ui| {
             if self.tab == Tab::Vulnerability {
                 self.vuln.status(ui);
+            } else if let Some(j) = &self.nmap_job {
+                ui.add(egui::ProgressBar::new(j.pct / 100.0).desired_width(220.0).fill(ACCENT).show_percentage());
+                ui.label(format!(
+                    "Nmap{}: {} · {} of {} device(s) identified · {:.0} s{}",
+                    if j.deep { " deep scan" } else { "" },
+                    j.task,
+                    j.identified,
+                    j.targets,
+                    j.started.elapsed().as_secs_f64(),
+                    if j.cancel.load(std::sync::atomic::Ordering::Relaxed) { " · stopping…" } else { "" }
+                ));
             } else if let Some((job, kind)) = &self.job {
                 let done = job.done();
                 let frac = if job.total == 0 { 1.0 } else { done as f32 / job.total as f32 };
@@ -730,6 +923,10 @@ impl App {
                 self.selected = Some(ip);
                 self.open_ping(ctx, ip);
             }
+            RowAction::Identify(ip) => {
+                self.selected = Some(ip);
+                self.start_nmap(vec![ip]);
+            }
             RowAction::Open(ip, scheme, port) => open_url(ctx, ip, scheme, port),
         }
     }
@@ -766,6 +963,9 @@ impl App {
             row("UPnP name", h.upnp_name.clone().unwrap_or_else(|| "—".into()));
             row("DNS name", h.dns_name.clone().unwrap_or_else(|| "—".into()));
             row("Workgroup", h.workgroup.clone().unwrap_or_else(|| "—".into()));
+            if let Some(os) = &h.os {
+                row("Operating system", os.clone());
+            }
             row("Response", rtt_text(&h));
             row("Detected by", h.method.label().into());
             row(
@@ -785,6 +985,16 @@ impl App {
             }
             if ui.button("📶 Ping test").clicked() {
                 self.open_ping(&ui.ctx().clone(), h.ip);
+            }
+            if self.nmap.is_some()
+                && ui
+                    .add_enabled(!self.busy(), egui::Button::new("🔬 Identify (Nmap)"))
+                    .on_hover_text(
+                        "Operating system and service versions with Nmap (deep scan option in the toolbar menu)",
+                    )
+                    .clicked()
+            {
+                self.start_nmap(vec![h.ip]);
             }
             if ui.button("Copy IP").clicked() {
                 ui.ctx().copy_text(h.ip.to_string());
@@ -816,6 +1026,18 @@ impl App {
                 egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
                     for p in list {
                         port_row(ui, h.ip, p);
+                    }
+                    if !h.nmap_scripts.is_empty() {
+                        ui.add_space(12.0);
+                        ui.label(RichText::new("Nmap details").strong());
+                        ui.separator();
+                        for (id, out) in &h.nmap_scripts {
+                            egui::CollapsingHeader::new(RichText::new(id).monospace())
+                                .id_salt(("nmap", h.ip, id))
+                                .show(ui, |ui| {
+                                    copy_value(ui, RichText::new(out).monospace().small(), out);
+                                });
+                        }
                     }
                 });
             }
@@ -869,6 +1091,37 @@ impl App {
                     self.config.save();
                 }
                 ui.end_row();
+                ui.label("Nmap (optional)");
+                ui.vertical(|ui| {
+                    match &self.nmap {
+                        Some(n) => {
+                            ui.label(format!("{} — {}", n.label(), n.path.display()));
+                            if cfg!(target_os = "linux") && !n.trusted {
+                                ui.label(
+                                    RichText::new(
+                                        "Not installed by the system package manager: deep scans (admin) are disabled.",
+                                    )
+                                    .small()
+                                    .color(AMBER),
+                                );
+                            }
+                        }
+                        None if crate::nmap::in_flatpak() => {
+                            ui.label(RichText::new(crate::nmap::missing_text()).small().weak());
+                        }
+                        None => {
+                            ui.horizontal(|ui| {
+                                ui.label(RichText::new("Not installed.").weak());
+                                ui.hyperlink_to("Get Nmap", crate::nmap::DOWNLOAD_URL);
+                            });
+                        }
+                    }
+                    if ui.small_button("⟳ Look again").clicked() {
+                        self.nmap = crate::nmap::refresh();
+                        self.vuln.set_nmap(self.nmap.clone());
+                    }
+                });
+                ui.end_row();
                 ui.label("NVD API key");
                 ui.vertical(|ui| {
                     ui.add(egui::TextEdit::singleline(&mut self.nvd_api_key).password(true).desired_width(260.0).char_limit(64).hint_text("optional"));
@@ -919,6 +1172,7 @@ impl App {
 impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.poll_job();
+        self.poll_nmap();
         let ctx = ui.ctx().clone();
 
         // Drop an expired message; otherwise wake up when it expires.
@@ -1005,6 +1259,7 @@ enum RowAction {
     CopyRow(Ipv4Addr),
     ScanPorts(Ipv4Addr),
     Ping(Ipv4Addr),
+    Identify(Ipv4Addr),
     Open(Ipv4Addr, &'static str, u16),
 }
 
@@ -1018,6 +1273,7 @@ impl RowAction {
             | RowAction::CopyRow(ip)
             | RowAction::ScanPorts(ip)
             | RowAction::Ping(ip)
+            | RowAction::Identify(ip)
             | RowAction::Open(ip, ..) => ip,
         }
     }
@@ -1030,6 +1286,9 @@ fn row_menu(ui: &mut egui::Ui, ip: Ipv4Addr) -> Option<RowAction> {
     }
     if ui.button("📶 Ping test…").clicked() {
         a = Some(RowAction::Ping(ip));
+    }
+    if crate::nmap::find().is_some() && ui.button("🔬 Identify with Nmap").clicked() {
+        a = Some(RowAction::Identify(ip));
     }
     ui.separator();
     if ui.button("Open http://…").clicked() {
