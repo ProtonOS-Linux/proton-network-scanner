@@ -57,13 +57,22 @@ impl ReportData<'_> {
     }
 
     /// Number of findings (host × vulnerability) per severity.
-    pub fn counts(&self) -> [(Severity, usize); 5] {
+    pub fn counts(&self) -> [(Severity, usize); 6] {
         Severity::ALL.map(|s| (s, self.findings.iter().filter(|f| f.severity == s).count()))
     }
 }
 
 /// How the scores are calculated (same text in both reports and the app).
 pub const METHOD_NOTES: &[(&str, &str)] = &[
+    (
+        "Confidence",
+        "How each finding was established. Confirmed: seen directly (a configuration check, or an Nmap script that \
+         tested for it). Version match: the service announced an exact version that NVD lists as vulnerable. May be \
+         backported: a version match on a Linux distribution build, which may already contain the fix. Unverified: \
+         only an approximate version is visible (e.g. Samba \"4\"), so known CVEs can be neither confirmed nor ruled \
+         out; such software is listed under \"Needs manual check\" (severity Review) and is not counted as a \
+         vulnerability.",
+    ),
     (
         "CVSS v4.0",
         "Common Vulnerability Scoring System from FIRST: how severe a vulnerability is (0-10). NVD's v4.0 score \

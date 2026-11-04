@@ -39,6 +39,8 @@ Options:
   --csv              print results as CSV instead of a table
   --nmap             identify services and the operating system with Nmap (if installed;
                      safe scripts only). With --vuln: use Nmap as the scan engine
+  --show-unverified  with --vuln: list every CVE that could apply to software whose exact
+                     version is unknown (marked Unverified), instead of one Review item
   --deep             with --nmap: SYN scan + OS detection. Asks for the administrator
                      password (Linux, pkexec) for this one Nmap run only
 
@@ -83,7 +85,7 @@ fn run_inner(args: &[String]) -> Result<(), String> {
     let mut csv = false;
     let (mut vuln, mut report, mut logins, mut ports_given) = (false, None::<String>, true, false);
     let mut cve = crate::vuln::CveSource::Online;
-    let (mut use_nmap, mut deep) = (false, false);
+    let (mut use_nmap, mut deep, mut show_unverified) = (false, false, false);
 
     let mut it = args.iter();
     while let Some(arg) = it.next() {
@@ -106,6 +108,7 @@ fn run_inner(args: &[String]) -> Result<(), String> {
             "--vuln" => vuln = true,
             "--nmap" => use_nmap = true,
             "--deep" => deep = true,
+            "--show-unverified" => show_unverified = true,
             "--report" => {
                 let r = value("--report")?;
                 if r != "pdf" && r != "xlsx" {
@@ -179,7 +182,8 @@ fn run_inner(args: &[String]) -> Result<(), String> {
             _ => scanner::range::parse_ports(scanner::ports::PRESET_VULN)?,
         };
         let engine = if use_nmap { crate::vuln::Engine::Nmap } else { crate::vuln::Engine::Builtin };
-        let opts = VulnCli { speed: settings.speed, cve_source: cve, safe_logins: logins, engine, deep };
+        let opts =
+            VulnCli { speed: settings.speed, cve_source: cve, safe_logins: logins, engine, deep, show_unverified };
         return run_vuln(ips, range, ports, opts, report.as_deref(), nets);
     }
 
@@ -304,6 +308,7 @@ struct VulnCli {
     safe_logins: bool,
     engine: crate::vuln::Engine,
     deep: bool,
+    show_unverified: bool,
 }
 
 /// `--vuln`: run an assessment and print the findings (most urgent first).
@@ -316,7 +321,7 @@ fn run_vuln(
     nets: Vec<scanner::LocalNet>,
 ) -> Result<(), String> {
     use crate::vuln::{self, VulnEvent, VulnOptions};
-    let VulnCli { speed, cve_source, safe_logins, engine, deep } = o;
+    let VulnCli { speed, cve_source, safe_logins, engine, deep, show_unverified } = o;
     eprintln!(
         "Vulnerability assessment of {range} ({} ports, {}, {} engine{})…",
         ports.len(),
@@ -335,6 +340,7 @@ fn run_vuln(
         nvd_api_key: std::env::var("NVD_API_KEY").ok(),
         nets,
         engine,
+        show_unverified,
         deep,
     });
     let (mut findings, mut services, mut notes, mut hosts) = (Vec::new(), Vec::new(), Vec::new(), 0usize);
@@ -356,12 +362,12 @@ fn run_vuln(
     }
     findings.sort_by(|a, b| a.rank_cmp(b));
     let mut out = format!(
-        "{:<9} {:<16} {:<21} {:>5} {:>5} {:>6} {:>4}  TITLE\n",
-        "SEVERITY", "ID", "HOST", "CVSS", "PPR", "EPSS", "KEV"
+        "{:<9} {:<16} {:<21} {:>5} {:>5} {:>6} {:>4}  {:<17} TITLE\n",
+        "SEVERITY", "ID", "HOST", "CVSS", "PPR", "EPSS", "KEV", "CONFIDENCE"
     );
     for f in &findings {
         out.push_str(&format!(
-            "{:<9} {:<16} {:<21} {:>5} {:>5.1} {:>6} {:>4}  {}\n",
+            "{:<9} {:<16} {:<21} {:>5} {:>5.1} {:>6} {:>4}  {:<17} {}\n",
             f.severity.label(),
             f.id,
             format!("{}:{}", f.ip, f.port),
@@ -369,6 +375,7 @@ fn run_vuln(
             f.ppr,
             f.epss.map(|e| format!("{:.1}%", e.probability * 100.0)).unwrap_or_else(|| "-".into()),
             if f.kev { "yes" } else { "" },
+            f.confidence.label(),
             truncate(&f.title, 90),
         ));
     }

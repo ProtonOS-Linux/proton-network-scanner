@@ -100,6 +100,8 @@ pub struct VulnTab {
     speed: Speed,
     cve_source: CveSource,
     safe_logins: bool,
+    /// List each CVE that could apply to approximately-known software (Unverified).
+    show_unverified: bool,
     /// Scan engine (Nmap only when installed) and its deep-scan option.
     engine: vuln::Engine,
     deep: bool,
@@ -139,6 +141,7 @@ impl VulnTab {
             speed: Speed::Normal,
             cve_source: CveSource::Online,
             safe_logins: true,
+            show_unverified: false,
             engine: vuln::Engine::Builtin,
             deep: false,
             nmap: crate::nmap::find(),
@@ -242,6 +245,7 @@ impl VulnTab {
             nvd_api_key: net.nvd_api_key.clone(),
             nets: net.nets.to_vec(),
             engine: self.engine,
+            show_unverified: self.show_unverified,
             deep,
         }));
     }
@@ -447,6 +451,11 @@ impl VulnTab {
                 ui.checkbox(&mut self.safe_logins, "Safe login checks").on_hover_text(
                     "Try documented anonymous access (FTP 'anonymous', MQTT without password).\n\
                      Nothing is changed on the device.",
+                );
+                ui.checkbox(&mut self.show_unverified, "Show unverified CVEs").on_hover_text(
+                    "When only an approximate version is visible (e.g. Samba \"4\"), list every CVE that could\n\
+                     apply as its own finding, marked Unverified. Off: one \"needs manual check\" finding per\n\
+                     service (severity Review) lists them instead.",
                 );
             });
         });
@@ -851,8 +860,9 @@ impl VulnTab {
             .column(Column::exact(62.0))
             .column(Column::exact(44.0))
             .column(Column::exact(40.0))
+            .column(Column::exact(112.0))
             .header(26.0, |mut h| {
-                for t in ["#", "Severity", "ID", "Vulnerability", "Hosts", "CVSS", "EPSS", "PPR", "KEV"] {
+                for t in ["#", "Severity", "ID", "Vulnerability", "Hosts", "CVSS", "EPSS", "PPR", "KEV", "Confidence"] {
                     h.col(|ui| {
                         ui.strong(t).on_hover_text(column_help(t));
                     });
@@ -893,6 +903,9 @@ impl VulnTab {
                             kev_badge(ui);
                         }
                     });
+                    row.col(|ui| {
+                        confidence_label(ui, f.confidence);
+                    });
                     if row.response().clicked() {
                         clicked = Some((f.id.clone(), f.ip, f.port));
                     }
@@ -921,8 +934,9 @@ impl VulnTab {
             .column(Column::exact(62.0))
             .column(Column::exact(44.0))
             .column(Column::exact(40.0))
+            .column(Column::exact(112.0))
             .header(26.0, |mut h| {
-                for t in ["Severity", "ID", "Title", "Host", "Port", "CVSS", "EPSS", "PPR", "KEV"] {
+                for t in ["Severity", "ID", "Title", "Host", "Port", "CVSS", "EPSS", "PPR", "KEV", "Confidence"] {
                     h.col(|ui| {
                         ui.strong(t).on_hover_text(column_help(t));
                     });
@@ -961,6 +975,9 @@ impl VulnTab {
                         if f.kev {
                             kev_badge(ui);
                         }
+                    });
+                    row.col(|ui| {
+                        confidence_label(ui, f.confidence);
                     });
                     if row.response().clicked() {
                         clicked = Some(idx);
@@ -1049,6 +1066,9 @@ impl VulnTab {
             ui.add_space(8.0);
 
             egui::Grid::new("finding").num_columns(2).spacing([12.0, 6.0]).striped(true).show(ui, |ui| {
+                ui.label(RichText::new("Confidence").weak());
+                confidence_label(ui, f.confidence);
+                ui.end_row();
                 let mut row = |k: &str, v: String| {
                     ui.label(RichText::new(k).weak());
                     copy_value(ui, v.clone(), &v);
@@ -1058,27 +1078,31 @@ impl VulnTab {
                 if let Some(p) = &f.product {
                     row("Software", p.clone());
                 }
-                row(
-                    "CVSS",
-                    f.cvss
-                        .as_ref()
-                        .map(|c| format!("{:.1}  (v{})", c.score, c.version))
-                        .unwrap_or_else(|| "not scored yet".into()),
-                );
-                row(
-                    "EPSS",
-                    f.epss
-                        .map(|e| {
-                            format!(
-                                "{:.2}% chance of exploitation in 30 days (percentile {:.0})",
-                                e.probability * 100.0,
-                                e.percentile * 100.0
-                            )
-                        })
-                        .unwrap_or_else(|| "—".into()),
-                );
-                row("Priority (PPR)", if f.ppr > 0.0 { format!("{:.1} / 10", f.ppr) } else { "—".into() });
-                row("Known exploited", if f.kev { "Yes — listed in CISA KEV".into() } else { "No".into() });
+                if f.severity == Severity::Review {
+                    row("Status", "Needs a manual check — not a confirmed vulnerability".into());
+                } else {
+                    row(
+                        "CVSS",
+                        f.cvss
+                            .as_ref()
+                            .map(|c| format!("{:.1}  (v{})", c.score, c.version))
+                            .unwrap_or_else(|| "not scored yet".into()),
+                    );
+                    row(
+                        "EPSS",
+                        f.epss
+                            .map(|e| {
+                                format!(
+                                    "{:.2}% chance of exploitation in 30 days (percentile {:.0})",
+                                    e.probability * 100.0,
+                                    e.percentile * 100.0
+                                )
+                            })
+                            .unwrap_or_else(|| "—".into()),
+                    );
+                    row("Priority (PPR)", if f.ppr > 0.0 { format!("{:.1} / 10", f.ppr) } else { "—".into() });
+                    row("Known exploited", if f.kev { "Yes — listed in CISA KEV".into() } else { "No".into() });
+                }
                 if let Some(p) = &f.published {
                     row("Published", p.clone());
                 }
@@ -1190,6 +1214,11 @@ impl VulnTab {
                 evidence: format!("Version-based match: {product} announced on port {port}."),
                 references: vec![format!("https://nvd.nist.gov/vuln/detail/{id}")],
                 published: Some("2024-01-01".into()),
+                confidence: if product.starts_with("OpenSSH") {
+                    vuln::Confidence::Backported
+                } else {
+                    vuln::Confidence::VersionMatch
+                },
             }
         };
         let v31 = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H";
@@ -1266,6 +1295,39 @@ impl VulnTab {
             checks::FTP_CLEARTEXT.finding(ip(60), 21, "FTP", "220 (vsFTPd 3.0.3)"),
             checks::VERSION_DISCLOSED.finding(ip(10), 22, "SSH", "OpenSSH 8.9p1"),
             checks::VERSION_DISCLOSED.finding(ip(10), 80, "HTTP (web)", "Apache httpd 2.4.49"),
+            // What a patched Samba server looks like: one "needs manual check" item.
+            Finding {
+                id: "REVIEW-samba".into(),
+                title: "Samba smbd 4: exact version unknown — 47 CVEs could apply (2 known exploited)".into(),
+                ip: ip(10),
+                port: 445,
+                service: "microsoft-ds".into(),
+                product: Some("Samba smbd 4".into()),
+                severity: Severity::Review,
+                cvss: None,
+                epss: None,
+                kev: false,
+                ppr: 0.0,
+                description: "The scanner can see that this is Samba smbd but not its exact version (Samba smbd 4). \
+                              Known vulnerabilities depend on the exact version, so from the network they can be \
+                              neither confirmed nor ruled out. (Demo data for screenshots.)"
+                    .into(),
+                solution: "Check the installed version: On the server run `smbd --version` (or `apt policy samba`). \
+                           Compare it with the \"fixed in\" versions listed in the evidence."
+                    .into(),
+                evidence: "Seen on port 445: \"Samba smbd 4\" — only the version family (4.x) is visible from the \
+                           network.\n\nCVEs that affect some 4.x version, worst first:\n\
+                           • CVE-2017-7494 · CVSS 9.8 · KEV · fixed in 4.6.4\n\
+                           • CVE-2020-1472 · CVSS 5.5 · KEV · fixed in 4.12.4\n\
+                           • CVE-2023-3961 · CVSS 9.8 · fixed in 4.19.1\n\
+                           • CVE-2021-44142 · CVSS 8.8 · fixed in 4.15.5\n\
+                           • CVE-2023-34966 · CVSS 7.5 · fixed in 4.18.5\n\
+                           … and 42 more."
+                    .into(),
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2017-7494".into()],
+                published: None,
+                confidence: vuln::Confidence::Unverified,
+            },
         ];
         self.hosts = 3;
         self.duration_secs = 41.0;
@@ -1304,6 +1366,10 @@ fn column_help(col: &str) -> &'static str {
         "EPSS" => "Probability of exploitation in the next 30 days (FIRST EPSS)",
         "PPR" => "Proton Priority Rating 0-10 (VPR-style): severity combined with real-world threat",
         "KEV" => "Listed in CISA's Known Exploited Vulnerabilities catalog",
+        "Confidence" => {
+            "How the finding was established: Confirmed · Version match · May be backported (distribution build) · \
+             Unverified (only an approximate version is visible — check manually)"
+        }
         "Hosts" => "Number of hosts with this vulnerability",
         _ => "",
     }

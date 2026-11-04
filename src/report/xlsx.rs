@@ -88,6 +88,7 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
             ("EPSS", 9),
             ("PPR", 7),
             ("KEV", 6),
+            ("Confidence", 16),
         ],
     )?;
     for (i, t) in d.top10.iter().enumerate() {
@@ -102,6 +103,7 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
         epss_cell(ws, r, 7, f, &pct)?;
         ws.write_number_with_format(r, 8, r1(f.ppr), &num1)?;
         ws.write_string(r, 9, if f.kev { "Yes" } else { "" })?;
+        ws.write_string(r, 10, f.confidence.label())?;
     }
     ws.set_freeze_panes(1, 0)?;
 
@@ -130,6 +132,7 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
             ("Solution", 50),
             ("Evidence", 50),
             ("References", 50),
+            ("Confidence", 16),
         ],
     )?;
     let mut sorted: Vec<_> = d.findings.iter().collect();
@@ -155,9 +158,10 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
         ws.write_string_with_format(r, 15, &f.solution, &wrap)?;
         ws.write_string_with_format(r, 16, &f.evidence, &wrap)?;
         ws.write_string_with_format(r, 17, f.references.join("\n"), &wrap)?;
+        ws.write_string(r, 18, f.confidence.label())?;
     }
     if !sorted.is_empty() {
-        ws.autofilter(0, 0, sorted.len() as u32, 17)?;
+        ws.autofilter(0, 0, sorted.len() as u32, 18)?;
     }
     ws.set_freeze_panes(1, 0)?;
 
@@ -177,6 +181,7 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
             ("EPSS", 9),
             ("PPR", 7),
             ("KEV", 6),
+            ("Confidence", 16),
         ],
     )?;
     let groups = d.groups();
@@ -192,9 +197,10 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
         epss_cell(ws, r, 6, f, &pct)?;
         ws.write_number_with_format(r, 7, r1(f.ppr), &num1)?;
         ws.write_string(r, 8, if f.kev { "Yes" } else { "" })?;
+        ws.write_string(r, 9, f.confidence.label())?;
     }
     if !groups.is_empty() {
-        ws.autofilter(0, 0, groups.len() as u32, 8)?;
+        ws.autofilter(0, 0, groups.len() as u32, 9)?;
     }
     ws.set_freeze_panes(1, 0)?;
 

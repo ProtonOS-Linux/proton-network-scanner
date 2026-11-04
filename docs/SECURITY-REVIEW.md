@@ -197,9 +197,11 @@ only *recommends* it and the app links to nmap.org.
 ## Known limitations (accepted)
 
 * **Version-based CVE matching**: like remote version checks in other scanners, CVEs are matched from
-  the version a service announces — only when it is exact (`major.minor` or more; since 1.4.1 approximate
-  fingerprints such as Samba "4" are not matched, which removed a large class of false positives). Linux distributions back-port fixes without changing the version;
-  findings from such builds are flagged ("confirm with the installed package version").
+  the version a service announces — only when it is exact (`major.minor` or more). Approximate fingerprints
+  such as Samba "4" are not matched as vulnerabilities (that produced many false positives before 1.4.1); they
+  become one *Needs manual check* item (severity Review, confidence Unverified) listing the CVEs that could
+  apply. Linux distributions back-port fixes without changing the version; findings from such builds carry the
+  confidence *May be backported*. Every finding shows its confidence.
 * **PPR is not VPR.** Tenable's VPR is proprietary. PPR (Proton Priority Rating) uses the same idea
   with public data (CVSS + EPSS + KEV); the formula is documented in the app, the reports and
   `src/vuln/score.rs`.

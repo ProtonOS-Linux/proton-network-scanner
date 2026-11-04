@@ -409,7 +409,7 @@ pub fn build(d: &ReportData<'_>) -> Vec<u8> {
 
     // ---- Severity summary boxes -------------------------------------------
     doc.heading("Summary");
-    let box_w = (CONTENT_W - 4.0 * 8.0) / 5.0;
+    let box_w = (CONTENT_W - 5.0 * 8.0) / 6.0;
     doc.y -= 58.0;
     for (i, (sev, count)) in d.counts().iter().enumerate() {
         let x = MARGIN + i as f32 * (box_w + 8.0);
@@ -435,7 +435,7 @@ pub fn build(d: &ReportData<'_>) -> Vec<u8> {
     }
     doc.y -= 6.0;
     let groups = d.groups();
-    let distinct = groups.iter().filter(|g| g.finding.severity != Severity::Info).count();
+    let distinct = groups.iter().filter(|g| !matches!(g.finding.severity, Severity::Info | Severity::Review)).count();
     let kev = groups.iter().filter(|g| g.finding.kev).count();
     doc.para(
         MARGIN,
@@ -501,6 +501,8 @@ pub fn build(d: &ReportData<'_>) -> Vec<u8> {
     // ---- Detailed findings ----------------------------------------------------
     doc.heading("Findings");
     let (main, info): (Vec<_>, Vec<_>) = groups.iter().partition(|g| g.finding.severity != Severity::Info);
+    // "Needs manual check" items get their own section after the real findings.
+    let (review, main): (Vec<_>, Vec<_>) = main.into_iter().partition(|g| g.finding.severity == Severity::Review);
     if main.is_empty() {
         doc.para(
             MARGIN,
@@ -511,51 +513,75 @@ pub fn build(d: &ReportData<'_>) -> Vec<u8> {
             "No vulnerabilities above informational level were found.",
         );
     }
-    for g in &main {
-        let f = g.finding;
-        doc.need(90.0);
-        doc.y -= 18.0;
-        let w = doc.tag(MARGIN, doc.y, f.severity);
-        let head = format!("{}  {}", f.id, if f.kev { "|  KNOWN EXPLOITED (CISA KEV)" } else { "" });
-        doc.text(MARGIN + w + 8.0, doc.y, 9.5, Font::Bold, if f.kev { (185, 28, 28) } else { BRAND_DARK }, &head);
-        doc.y -= 5.0; // breathing room between the tag line and the title
-        doc.para(MARGIN, CONTENT_W, 10.5, Font::Bold, TEXT, &f.title);
-        let scores = format!(
-            "CVSS {}: {}   |   EPSS: {}   |   PPR: {:.1}{}",
-            f.cvss.as_ref().map(|c| c.version.as_str()).unwrap_or("-"),
-            f.cvss.as_ref().map(|c| format!("{:.1}", c.score)).unwrap_or_else(|| "not scored".into()),
-            f.epss
-                .map(|e| format!("{:.2}% (percentile {:.0})", e.probability * 100.0, e.percentile * 100.0))
-                .unwrap_or_else(|| "-".into()),
-            f.ppr,
-            f.published.as_ref().map(|p| format!("   |   Published: {p}")).unwrap_or_default(),
-        );
-        doc.para(MARGIN, CONTENT_W, 8.5, Font::Regular, MUTED, &scores);
-        if let Some(c) = &f.cvss
-            && !c.vector.is_empty()
-        {
-            doc.para(MARGIN, CONTENT_W, 7.5, Font::Mono, MUTED, &c.vector);
+    let sections = [(None, main), (Some("Needs manual check"), review)];
+    for (heading, list) in &sections {
+        if let Some(h) = heading {
+            if list.is_empty() {
+                continue;
+            }
+            doc.heading(h);
+            doc.para(
+                MARGIN,
+                CONTENT_W,
+                9.0,
+                Font::Regular,
+                MUTED,
+                "The scanner could see these programs but not their exact version, so known vulnerabilities could be \
+             neither confirmed nor ruled out. They are not counted as vulnerabilities and may be false positives: \
+             check the installed version as described for each one.",
+            );
         }
-        let locs: Vec<String> = g.locations.iter().map(|(ip, p)| format!("{ip}:{p}")).collect();
-        let affected = format!(
-            "Affected ({}): {}{}",
-            locs.len(),
-            locs.join(", "),
-            f.product.as_ref().map(|p| format!("   -   {p}")).unwrap_or_default()
-        );
-        doc.para(MARGIN, CONTENT_W, 9.0, Font::Bold, TEXT, &affected);
-        doc.para(MARGIN, CONTENT_W, 9.0, Font::Regular, TEXT, &f.description);
-        doc.y -= 2.0;
-        doc.para(MARGIN, CONTENT_W, 9.0, Font::Regular, TEXT, &format!("Solution: {}", f.solution));
-        if !f.evidence.is_empty() {
-            doc.para(MARGIN, CONTENT_W, 8.5, Font::Regular, MUTED, &format!("Evidence: {}", f.evidence));
+        for g in list {
+            let f = g.finding;
+            doc.need(90.0);
+            doc.y -= 18.0;
+            let w = doc.tag(MARGIN, doc.y, f.severity);
+            let head = format!("{}  {}", f.id, if f.kev { "|  KNOWN EXPLOITED (CISA KEV)" } else { "" });
+            doc.text(MARGIN + w + 8.0, doc.y, 9.5, Font::Bold, if f.kev { (185, 28, 28) } else { BRAND_DARK }, &head);
+            doc.y -= 5.0; // breathing room between the tag line and the title
+            doc.para(MARGIN, CONTENT_W, 10.5, Font::Bold, TEXT, &f.title);
+            let scores = format!(
+                "CVSS {}: {}   |   EPSS: {}   |   PPR: {:.1}{}",
+                f.cvss.as_ref().map(|c| c.version.as_str()).unwrap_or("-"),
+                f.cvss.as_ref().map(|c| format!("{:.1}", c.score)).unwrap_or_else(|| "not scored".into()),
+                f.epss
+                    .map(|e| format!("{:.2}% (percentile {:.0})", e.probability * 100.0, e.percentile * 100.0))
+                    .unwrap_or_else(|| "-".into()),
+                f.ppr,
+                f.published.as_ref().map(|p| format!("   |   Published: {p}")).unwrap_or_default(),
+            ) + &format!("   |   Confidence: {}", f.confidence.label());
+            let scores = if f.severity == Severity::Review {
+                format!("Confidence: {} — not a confirmed vulnerability, needs a manual check", f.confidence.label())
+            } else {
+                scores
+            };
+            doc.para(MARGIN, CONTENT_W, 8.5, Font::Regular, MUTED, &scores);
+            if let Some(c) = &f.cvss
+                && !c.vector.is_empty()
+            {
+                doc.para(MARGIN, CONTENT_W, 7.5, Font::Mono, MUTED, &c.vector);
+            }
+            let locs: Vec<String> = g.locations.iter().map(|(ip, p)| format!("{ip}:{p}")).collect();
+            let affected = format!(
+                "Affected ({}): {}{}",
+                locs.len(),
+                locs.join(", "),
+                f.product.as_ref().map(|p| format!("   -   {p}")).unwrap_or_default()
+            );
+            doc.para(MARGIN, CONTENT_W, 9.0, Font::Bold, TEXT, &affected);
+            doc.para(MARGIN, CONTENT_W, 9.0, Font::Regular, TEXT, &f.description);
+            doc.y -= 2.0;
+            doc.para(MARGIN, CONTENT_W, 9.0, Font::Regular, TEXT, &format!("Solution: {}", f.solution));
+            if !f.evidence.is_empty() {
+                doc.para(MARGIN, CONTENT_W, 8.5, Font::Regular, MUTED, &format!("Evidence: {}", f.evidence));
+            }
+            for r in f.references.iter().take(3) {
+                doc.para(MARGIN + 8.0, CONTENT_W - 8.0, 7.5, Font::Mono, (37, 99, 235), r);
+            }
+            doc.y -= 6.0;
+            doc.need(4.0);
+            doc.hline(doc.y, RULE);
         }
-        for r in f.references.iter().take(3) {
-            doc.para(MARGIN + 8.0, CONTENT_W - 8.0, 7.5, Font::Mono, (37, 99, 235), r);
-        }
-        doc.y -= 6.0;
-        doc.need(4.0);
-        doc.hline(doc.y, RULE);
     }
 
     // ---- Informational ----------------------------------------------------------

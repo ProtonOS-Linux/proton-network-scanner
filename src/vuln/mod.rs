@@ -63,6 +63,55 @@ pub struct Finding {
     pub evidence: String,
     pub references: Vec<String>,
     pub published: Option<String>,
+    /// How sure the scanner is that this finding is real.
+    pub confidence: Confidence,
+}
+
+/// How a finding was established — shown next to every finding so false
+/// positives are easy to spot.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum Confidence {
+    /// Observed directly: a configuration check, or an Nmap script that
+    /// tested for the vulnerability.
+    #[default]
+    Confirmed,
+    /// The service announced an exact version inside a vulnerable range.
+    VersionMatch,
+    /// Version match on a Linux distribution build: distributions back-port
+    /// fixes without changing the version, so it may already be fixed.
+    Backported,
+    /// Only an approximate version is known ("Samba 4"): the CVE could apply
+    /// or not — check manually.
+    Unverified,
+}
+
+impl Confidence {
+    pub fn label(self) -> &'static str {
+        match self {
+            Confidence::Confirmed => "Confirmed",
+            Confidence::VersionMatch => "Version match",
+            Confidence::Backported => "May be backported",
+            Confidence::Unverified => "Unverified",
+        }
+    }
+
+    /// One-line explanation (tooltips, reports).
+    pub fn help(self) -> &'static str {
+        match self {
+            Confidence::Confirmed => "Seen directly: a configuration check, or an Nmap script that tested for it.",
+            Confidence::VersionMatch => {
+                "The service announced an exact version that NVD lists as vulnerable. Very likely real."
+            }
+            Confidence::Backported => {
+                "Version match on a Linux distribution build. Distributions fix security bugs without changing the \
+                 version number, so check the installed package version."
+            }
+            Confidence::Unverified => {
+                "Only an approximate version is visible from the network, so this could not be confirmed. It may \
+                 be a false positive: check the installed version on the device."
+            }
+        }
+    }
 }
 
 impl Finding {
@@ -96,7 +145,11 @@ pub struct TopItem {
 /// The 10 most urgent distinct vulnerabilities (Info findings excluded).
 pub fn top10(findings: &[Finding]) -> Vec<TopItem> {
     let mut by_id: BTreeMap<&str, (Finding, std::collections::BTreeSet<Ipv4Addr>)> = BTreeMap::new();
-    for f in findings.iter().filter(|f| f.severity != Severity::Info) {
+    // Top 10 = real priorities: no Info, no "needs manual check" items.
+    for f in findings
+        .iter()
+        .filter(|f| !matches!(f.severity, Severity::Info | Severity::Review) && f.confidence != Confidence::Unverified)
+    {
         let e = by_id.entry(&f.id).or_insert_with(|| (f.clone(), Default::default()));
         e.1.insert(f.ip);
         if f.rank_cmp(&e.0).is_lt() {
@@ -191,6 +244,10 @@ pub struct VulnOptions {
     pub nvd_api_key: Option<String>,
     pub nets: Vec<LocalNet>,
     pub engine: Engine,
+    /// List every CVE that *could* apply to software with an approximate
+    /// version as its own (Unverified) finding, instead of one "needs manual
+    /// check" finding per service ("paranoid" mode).
+    pub show_unverified: bool,
     /// Nmap only: SYN scan + OS detection (asks for admin rights on Linux,
     /// for this one run).
     pub deep: bool,
@@ -455,49 +512,54 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
         let _ = tx.send(VulnEvent::Note("CVE matching is off, so only configuration checks were run.".into()));
         return;
     }
-    // Unique CPEs → the services that run them. Products whose version is
-    // only approximate are not matched (that would list nearly every CVE of
-    // the product); the note says which ones.
+    // Unique CPEs → the services that run them. Software whose version is
+    // only approximate ("Samba 4") is not version-matched — "4" would match
+    // nearly every CVE of the product. It becomes one "needs manual check"
+    // finding per service instead, listing the CVEs that could apply.
     let mut by_cpe: BTreeMap<String, Vec<(&Service, &detect::Product)>> = BTreeMap::new();
-    let mut approximate: Vec<String> = Vec::new();
+    let mut approx: Vec<Approx> = Vec::new();
     for s in &services {
         for p in &s.products {
-            if let Some(cpe) = &p.cpe {
-                if cpe.split(':').nth(5).is_some_and(nvd::is_precise_version) {
-                    by_cpe.entry(cpe.clone()).or_default().push((s, p));
-                } else {
-                    approximate.push(format!("{} ({}:{})", p.label(), s.ip, s.port));
+            let Some(cpe) = &p.cpe else { continue };
+            let parts: Vec<&str> = cpe.split(':').collect();
+            let version = parts.get(5).copied().unwrap_or("");
+            if nvd::is_precise_version(version) {
+                by_cpe.entry(cpe.clone()).or_default().push((s, p));
+            } else if let (Some(v), Some(pr)) = (parts.get(3), parts.get(4)) {
+                let families = nvd::version_families(version);
+                if !families.is_empty() {
+                    approx.push(Approx { svc: s, product: p, key: (v.to_string(), pr.to_string()), families });
                 }
             }
         }
     }
-    approximate.dedup();
-    if !approximate.is_empty() {
-        let n = approximate.len();
-        approximate.truncate(5);
-        let _ = tx.send(VulnEvent::Note(format!(
-            "Only an approximate version is known for {n} service(s), e.g. {}. CVEs were not matched for them, \
-             because an approximate version would match almost every CVE of the product. Check the installed \
-             version on the device.",
-            approximate.join(", ")
-        )));
+    // Every (vendor, product) with an approximate version, and the families seen.
+    let mut approx_keys: BTreeMap<(String, String), Vec<u64>> = BTreeMap::new();
+    for a in &approx {
+        let fams = approx_keys.entry(a.key.clone()).or_default();
+        fams.extend(&a.families);
+        fams.sort_unstable();
+        fams.dedup();
     }
     // CVE ids that Nmap scripts confirmed (looked up by id).
     let mut script_ids: Vec<String> = script_cves.iter().map(|f| f.id.clone()).collect();
     script_ids.sort();
     script_ids.dedup();
     script_ids.truncate(40);
-    if by_cpe.is_empty() && script_ids.is_empty() {
+    if by_cpe.is_empty() && script_ids.is_empty() && approx_keys.is_empty() {
         let _ = tx.send(VulnEvent::Note(
             "No software versions could be identified on the open ports, so no CVE lookups were needed.".into(),
         ));
         return;
     }
-    progress.set(Phase::Lookup, by_cpe.len() + script_ids.len());
+    let lookups = by_cpe.len() + script_ids.len() + approx_keys.len();
+    progress.set(Phase::Lookup, lookups);
 
     // Records per CPE, from NVD (online) or the offline database.
     let mut records: BTreeMap<String, Vec<nvd::CveRecord>> = BTreeMap::new();
     let mut by_id: HashMap<String, nvd::CveRecord> = HashMap::new();
+    // All CVEs of products known only approximately (filtered per service later).
+    let mut approx_records: BTreeMap<(String, String), Vec<nvd::CveRecord>> = BTreeMap::new();
     let mut errors = Vec::new();
     let mut use_offline = opts.cve_source == CveSource::Offline;
     let mut db = nvd::VulnDb::new(opts.nvd_api_key.clone());
@@ -554,15 +616,35 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
                 }
                 progress.done.fetch_add(1, Ordering::Relaxed);
             }
+            for (vendor, product) in approx_keys.keys() {
+                if cancel.load(Ordering::Relaxed) {
+                    return;
+                }
+                progress.set_detail(&format!("NVD: all {product} CVEs (approximate version)"));
+                let mut list = Vec::new();
+                for (v, p) in offline::aliases(vendor, product) {
+                    match db.cves_for_product(&v, &p, cancel) {
+                        Ok(r) => list.extend(r),
+                        Err(e) if e.starts_with("could not reach") => {
+                            use_offline = true;
+                            break 'online;
+                        }
+                        Err(e) => errors.push(format!("{product}: {e}")),
+                    }
+                }
+                approx_records.insert((vendor.clone(), product.clone()), list);
+                progress.done.fetch_add(1, Ordering::Relaxed);
+            }
         }
         if use_offline {
             records.clear();
             by_id.clear();
+            approx_records.clear();
             errors.clear();
         }
     }
     if use_offline {
-        progress.set(Phase::Lookup, by_cpe.len() + script_ids.len());
+        progress.set(Phase::Lookup, lookups);
         progress.set_detail("offline database");
         let fallback = opts.cve_source == CveSource::Online;
         match offline::OfflineDb::load_installed() {
@@ -575,6 +657,9 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
                     if let Some(r) = off.by_id(id) {
                         by_id.insert(id.clone(), r);
                     }
+                }
+                for ((vendor, product), fams) in &approx_keys {
+                    approx_records.insert((vendor.clone(), product.clone()), off.lookup_family(vendor, product, fams));
                 }
                 let info = off.info();
                 let mut note = if fallback {
@@ -621,6 +706,38 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
             }
         }
     }
+    // Approximate versions: one "needs manual check" finding per service, or
+    // (show_unverified) each possible CVE as an Unverified finding.
+    let mut reviews: Vec<Finding> = Vec::new();
+    for a in &approx {
+        let names = offline::aliases(&a.key.0, &a.key.1);
+        let mut possible: Vec<&nvd::CveRecord> = approx_records
+            .get(&a.key)
+            .into_iter()
+            .flatten()
+            .filter(|r| r.rules.iter().any(|rule| names.iter().any(|(v, p)| rule.may_match_family(v, p, &a.families))))
+            .collect();
+        possible.sort_by(|x, y| x.id.cmp(&y.id));
+        possible.dedup_by(|x, y| x.id == y.id);
+        if possible.is_empty() {
+            continue;
+        }
+        if opts.show_unverified {
+            for r in possible {
+                let mut f = cve_finding(a.svc, a.product, r);
+                f.confidence = Confidence::Unverified;
+                f.evidence = format!(
+                    "Unverified: only an approximate version ({}) is visible on port {}, so this CVE may or may not \
+                     apply. Check the installed version.",
+                    a.product.label(),
+                    a.svc.port
+                );
+                cve_findings.push(f);
+            }
+        } else {
+            reviews.push(review_finding(a, &possible, &names));
+        }
+    }
     // A CVE an Nmap script confirmed replaces the version-based match.
     cve_findings.retain(|f| !script_cves.iter().any(|c| c.id == f.id && c.ip == f.ip && c.port == f.port));
     for mut f in script_cves {
@@ -655,7 +772,7 @@ fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: 
             f.ppr = score::ppr(impact, score::cve_threat(f.kev, f.epss).max(confirmed_threat(f)));
         }
     }
-    for f in cve_findings {
+    for f in cve_findings.into_iter().chain(reviews) {
         let _ = tx.send(VulnEvent::Finding(Box::new(f)));
     }
     if !errors.is_empty() {
@@ -814,6 +931,7 @@ fn os_finding(ip: Ipv4Addr, port: u16, service: &str, os: &str) -> Finding {
         evidence: format!("Nmap OS detection: {os}"),
         references: vec![],
         published: None,
+        confidence: Confidence::Confirmed,
     }
 }
 
@@ -880,6 +998,108 @@ fn cve_finding(svc: &Service, product: &detect::Product, r: &nvd::CveRecord) -> 
             refs
         },
         published: r.published.clone(),
+        confidence: if product.backported { Confidence::Backported } else { Confidence::VersionMatch },
+    }
+}
+
+/// A product the scanner knows only approximately ("Samba smbd 4") on one service.
+struct Approx<'a> {
+    svc: &'a Service,
+    product: &'a detect::Product,
+    /// NVD vendor and product.
+    key: (String, String),
+    /// Major version families it could be (4 → [4]; 3.X-4.X → [3, 4]).
+    families: Vec<u64>,
+}
+
+/// How to find the exact installed version, per product.
+fn manual_check_hint(product: &str) -> &'static str {
+    match product {
+        "samba" => {
+            "On the server run `smbd --version` (or `apt policy samba` on Debian/Ubuntu/Mint, `rpm -q samba` on \
+                    Fedora/RHEL)."
+        }
+        "openssh" => "On the server run `ssh -V` (or `apt policy openssh-server` / `rpm -q openssh-server`).",
+        "http_server" => "On the server run `apache2 -v` or `httpd -v` (or `apt policy apache2` / `rpm -q httpd`).",
+        "nginx" => "On the server run `nginx -v` (or `apt policy nginx` / `rpm -q nginx`).",
+        "openssl" => "On the server run `openssl version` (or `apt policy openssl` / `rpm -q openssl`).",
+        _ => {
+            "Look up the version in the device's admin page or settings, or on Linux with `apt policy <package>` \
+              / `rpm -q <package>`."
+        }
+    }
+}
+
+/// One "needs manual check" finding: the exact version is unknown, these
+/// CVEs could apply.
+fn review_finding(a: &Approx, possible: &[&nvd::CveRecord], names: &[(String, String)]) -> Finding {
+    let mut list = possible.to_vec();
+    list.sort_by(|x, y| {
+        y.kev
+            .cmp(&x.kev)
+            .then(y.cvss.as_ref().map_or(0.0, |c| c.score).total_cmp(&x.cvss.as_ref().map_or(0.0, |c| c.score)))
+    });
+    let kev = list.iter().filter(|r| r.kev).count();
+    let n = list.len();
+    let label = a.product.label();
+    let mut title = format!("{label}: exact version unknown — {n} CVE{} could apply", if n == 1 { "" } else { "s" });
+    if kev > 0 {
+        title.push_str(&format!(" ({kev} known exploited)"));
+    }
+    let fams: Vec<String> = a.families.iter().map(|f| format!("{f}.x")).collect();
+    let mut evidence = format!(
+        "Seen on port {}: \"{label}\" — only the version family ({}) is visible from the network.\n\nCVEs that affect \
+         some {} version, worst first:",
+        a.svc.port,
+        fams.join(", "),
+        fams.join(" / ")
+    );
+    for r in list.iter().take(25) {
+        let fixed = r
+            .rules
+            .iter()
+            .find(|rule| names.iter().any(|(v, p)| rule.may_match_family(v, p, &a.families)))
+            .and_then(|rule| rule.fixed_text());
+        evidence.push_str(&format!(
+            "\n• {}{}{}{}",
+            r.id,
+            r.cvss.as_ref().map(|c| format!(" · CVSS {:.1}", c.score)).unwrap_or_default(),
+            if r.kev { " · KEV" } else { "" },
+            fixed.map(|f| format!(" · {f}")).unwrap_or_default()
+        ));
+    }
+    if n > 25 {
+        evidence.push_str(&format!("\n… and {} more.", n - 25));
+    }
+    Finding {
+        id: format!("REVIEW-{}", a.key.1),
+        title,
+        ip: a.svc.ip,
+        port: a.svc.port,
+        service: a.svc.name.clone(),
+        product: Some(label.clone()),
+        severity: Severity::Review,
+        cvss: None,
+        epss: None,
+        kev: false,
+        ppr: 0.0,
+        description: format!(
+            "The scanner can see that this is {} but not its exact version ({label}). Known vulnerabilities depend on \
+             the exact version, so from the network they can be neither confirmed nor ruled out. If the software is \
+             up to date, none of the CVEs listed in the evidence apply — this is not a confirmed vulnerability, it \
+             needs a manual check.",
+            a.product.name
+        ),
+        solution: format!(
+            "Check the installed version: {} Compare it with the \"fixed in\" versions listed in the evidence. Linux \
+             distributions back-port fixes, so with a distribution package also check that its security updates are \
+             installed.",
+            manual_check_hint(&a.key.1)
+        ),
+        evidence,
+        references: list.iter().take(10).map(|r| format!("https://nvd.nist.gov/vuln/detail/{}", r.id)).collect(),
+        published: None,
+        confidence: Confidence::Unverified,
     }
 }
 
@@ -950,6 +1170,7 @@ mod tests {
             evidence: String::new(),
             references: vec![],
             published: None,
+            confidence: Confidence::VersionMatch,
         }
     }
 
@@ -996,6 +1217,7 @@ mod tests {
             nvd_api_key: None,
             nets: vec![],
             engine: Engine::Builtin,
+            show_unverified: false,
             deep: false,
         });
         let (mut services, mut notes) = (Vec::new(), Vec::new());
@@ -1067,6 +1289,7 @@ mod nmap_tests {
             nvd_api_key: None,
             nets: vec![],
             engine: Engine::Nmap,
+            show_unverified: false,
             deep: false,
         });
         let (mut findings, mut services, mut notes) = (Vec::new(), Vec::new(), Vec::new());
@@ -1137,6 +1360,7 @@ mod network_tests {
             nvd_api_key: None,
             nets: vec![],
             engine: Engine::Builtin,
+            show_unverified: false,
             deep: false,
         });
         let (mut findings, mut notes, mut services) = (Vec::new(), Vec::new(), Vec::new());

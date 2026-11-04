@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.5.0 — 2026-11-04
+
+### New
+- **"Needs manual check" findings.** When only an approximate version is visible (Samba "4", Apache "2"), the
+  service gets one finding with the new severity **Review** instead of silence (1.4.1) or a flood of CVEs (1.4.0):
+  it lists the CVEs that *could* apply to that version family, worst first, with "fixed in" versions, and says
+  how to check the installed version (`smbd --version`, `apt policy samba` …). Review findings have their own
+  tile, are not counted as vulnerabilities, never enter the Top 10, and get their own section in the PDF report.
+- **Confidence on every finding**: *Confirmed* (seen directly / Nmap script), *Version match*, *May be backported*
+  (Linux distribution build) or *Unverified* — a new column in the app, the Excel sheets, the PDF and the CLI.
+- **Show unverified CVEs** checkbox (CLI `--show-unverified`): list every CVE that could apply as its own
+  finding, marked Unverified, for those who want the full list. Unverified findings never enter the Top 10.
+
 ## 1.4.1 — 2026-11-04
 
 ### Fixed

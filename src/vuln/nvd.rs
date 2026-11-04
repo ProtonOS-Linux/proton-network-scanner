@@ -355,10 +355,40 @@ impl CpeRule {
             && self.end_excl.as_ref().is_none_or(|b| cmp(b) == Less)
         // A rule with "*" and no bounds at all means every version.
     }
+
+    /// Could this rule cover *some* version of the major families (e.g. any
+    /// Samba 4.x)? Used for "needs manual check" findings, where only the
+    /// family is known.
+    pub fn may_match_family(&self, vendor: &str, product: &str, families: &[u64]) -> bool {
+        use std::cmp::Ordering::*;
+        if self.vendor != vendor || self.product != product {
+            return false;
+        }
+        let any = |s: &str| s == "*" || s == "-" || s.is_empty();
+        let major = |s: &str| s.chars().take_while(char::is_ascii_digit).collect::<String>().parse::<u64>().ok();
+        if !any(&self.version) {
+            return major(&self.version).is_some_and(|m| families.contains(&m));
+        }
+        families.iter().any(|&f| {
+            let (lo, hi) = (f.to_string(), (f + 1).to_string());
+            // Family f = [f, f+1): the rule's range must overlap it.
+            self.start_incl.as_ref().is_none_or(|b| cmp_version(b, &hi) == Less)
+                && self.start_excl.as_ref().is_none_or(|b| cmp_version(b, &hi) == Less)
+                && self.end_incl.as_ref().is_none_or(|b| cmp_version(b, &lo) != Less)
+                && self.end_excl.as_ref().is_none_or(|b| cmp_version(b, &lo) == Greater)
+        })
+    }
+
+    /// "fixed in 4.6.4" / "up to 4.6.3" for the manual-check list.
+    pub fn fixed_text(&self) -> Option<String> {
+        match (&self.end_excl, &self.end_incl) {
+            (Some(e), _) => Some(format!("fixed in {e}")),
+            (None, Some(e)) => Some(format!("affects up to {e}")),
+            _ => None,
+        }
+    }
 }
 
-/// Compare version strings piece by piece: numbers numerically, letters
-/// alphabetically (`1.1.1f < 1.1.1k`, `9.3 < 9.3p2 < 9.10`).
 /// Is this an exact version that CVE version ranges can be compared with?
 ///
 /// Network fingerprints sometimes only know a family: Nmap reports Samba as
@@ -377,6 +407,31 @@ pub fn is_precise_version(v: &str) -> bool {
         && !parts.iter().any(|p| p.eq_ignore_ascii_case("x") || p.eq_ignore_ascii_case("*"))
 }
 
+/// Major version families named by an approximate version:
+/// "4" → [4], "4.X" → [4], "3.X - 4.X" / "3.X-4.X" → [3, 4].
+pub fn version_families(v: &str) -> Vec<u64> {
+    let mut out: Vec<u64> = v
+        .split(|c: char| c.is_whitespace() || c == '-')
+        .filter_map(|t| {
+            let digits: String = t.chars().take_while(char::is_ascii_digit).collect();
+            digits.parse().ok()
+        })
+        .collect();
+    // "3.X - 4.X" means every family from 3 to 4.
+    if let (Some(&lo), Some(&hi)) = (out.iter().min(), out.iter().max())
+        && hi > lo
+        && hi - lo <= 8
+    {
+        out = (lo..=hi).collect();
+    }
+    out.sort_unstable();
+    out.dedup();
+    out.truncate(10);
+    out
+}
+
+/// Compare version strings piece by piece: numbers numerically, letters
+/// alphabetically (`1.1.1f < 1.1.1k`, `9.3 < 9.3p2 < 9.10`).
 pub fn cmp_version(a: &str, b: &str) -> std::cmp::Ordering {
     fn pieces(s: &str) -> Vec<(bool, String)> {
         let mut out: Vec<(bool, String)> = Vec::new();
@@ -473,6 +528,31 @@ fn percent_encode(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn families() {
+        assert_eq!(version_families("4"), [4]);
+        assert_eq!(version_families("4.X"), [4]);
+        assert_eq!(version_families("3.X - 4.X"), [3, 4]);
+        assert_eq!(version_families("3.X-4.X"), [3, 4]);
+        assert_eq!(version_families("2"), [2]);
+        assert!(version_families("X").is_empty());
+        let rule = |start: Option<&str>, end: Option<&str>| CpeRule {
+            vendor: "samba".into(),
+            product: "samba".into(),
+            version: "*".into(),
+            update: "*".into(),
+            start_incl: start.map(String::from),
+            end_excl: end.map(String::from),
+            ..Default::default()
+        };
+        assert!(rule(Some("4.0.0"), Some("4.6.4")).may_match_family("samba", "samba", &[4]));
+        assert!(!rule(Some("4.0.0"), Some("4.6.4")).may_match_family("samba", "samba", &[3]));
+        assert!(!rule(Some("3.0.0"), Some("3.6.26")).may_match_family("samba", "samba", &[4]));
+        assert!(rule(None, Some("4.17.0")).may_match_family("samba", "samba", &[3, 4]));
+        assert!(rule(None, None).may_match_family("samba", "samba", &[4]), "all versions");
+        assert!(!rule(None, None).may_match_family("other", "samba", &[4]));
+    }
 
     #[test]
     fn precise_versions() {

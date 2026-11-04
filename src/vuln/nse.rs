@@ -90,17 +90,17 @@ pub fn products(p: &NmapPort) -> Vec<Product> {
             (Some(n), 0) => n.clone(),
             _ => pretty(product),
         };
-        // Only an exact version is used for CVE matching; an approximate one
-        // ("4", "3.X - 4.X") is shown but gets no CPE (see is_precise_version).
-        if !super::nvd::is_precise_version(&version) {
+        // An approximate version ("4", "3.X - 4.X") keeps it in the CPE
+        // (spaces removed); the assessment turns such products into "needs
+        // manual check" findings instead of CVE matches (is_precise_version).
+        if !version.is_empty() && !super::nvd::is_precise_version(&version) {
             let approx = match (&p.version, i) {
-                (Some(v), 0) => v.clone(),
+                (Some(v), 0) => v.replace(' ', ""),
                 _ => version.clone(),
             };
-            let shown = if approx.is_empty() { name.clone() } else { format!("{name} {approx}") };
-            let mut prod = Product::new(&detect::clean(&shown, 60), vendor, product, "", None);
+            let mut prod = Product::new(&name, vendor, product, &approx, None);
             prod.backported = distro;
-            if !out.iter().any(|o| o.cpe.is_none() && o.name == prod.name) {
+            if !out.iter().any(|o| o.cpe == prod.cpe && o.name == prod.name) {
                 out.push(prod);
             }
             continue;
@@ -161,7 +161,7 @@ pub fn severity_impact(s: Severity) -> f32 {
         Severity::High => 7.5,
         Severity::Medium => 5.0,
         Severity::Low => 3.0,
-        Severity::Info => 0.0,
+        Severity::Review | Severity::Info => 0.0,
     }
 }
 
@@ -268,6 +268,7 @@ fn vuln_finding(ip: Ipv4Addr, port: u16, service: &str, s: &Script, v: &crate::n
         evidence,
         references,
         published: v.disclosure.clone(),
+        confidence: super::Confidence::Confirmed,
     }
 }
 
@@ -337,14 +338,16 @@ mod tests {
         // Approximate versions (real Nmap Samba fingerprints) → no CPE, no CVE flood.
         p.cpes = vec!["cpe:/a:samba:samba".into()];
         p.product = Some("Samba smbd".into());
-        for v in ["3.X - 4.X", "4", "4.X"] {
+        for (v, token) in [("3.X - 4.X", "3.X-4.X"), ("4", "4"), ("4.X", "4.X")] {
             p.version = Some(v.into());
             let prod = &products(&p)[0];
-            assert_eq!(prod.cpe, None, "{v}");
-            assert_eq!(prod.label(), format!("Samba smbd {v}"));
+            assert_eq!(prod.cpe, Some(format!("cpe:2.3:a:samba:samba:{token}:*:*:*:*:*:*:*")), "{v}");
+            assert!(!crate::vuln::nvd::is_precise_version(token));
+            assert_eq!(prod.label(), format!("Samba smbd {token}"));
         }
         p.cpes = vec!["cpe:/a:samba:samba:4".into()];
-        assert_eq!(products(&p)[0].cpe, None);
+        p.version = None;
+        assert!(products(&p)[0].cpe.as_deref().is_some_and(|c| c.contains(":samba:4:")));
         p.cpes = vec!["cpe:/a:samba:samba:4.6.2".into()];
         assert_eq!(products(&p)[0].cpe.as_deref(), Some("cpe:2.3:a:samba:samba:4.6.2:*:*:*:*:*:*:*"));
         // Hostile version strings never reach a CPE.

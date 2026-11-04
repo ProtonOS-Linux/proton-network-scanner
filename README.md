@@ -64,6 +64,9 @@ Part of the [Proton OS](https://www.protonos.org) family.
   checks. Vulnerabilities a script confirms are scored with NVD/EPSS like every other CVE.
   **Deep scan** (SYN scan + OS detection) asks for admin rights **for that one run only** — see
   [Nmap](#nmap-optional).
+- **Confidence on every finding** (Confirmed · Version match · May be backported · Unverified), and a
+  **Needs manual check** item (severity *Review*) when only an approximate version is visible — e.g. Samba "4" —
+  listing the CVEs that could apply and how to check the installed version, instead of false positives.
 - **Top 10 vulnerabilities** by priority, all findings (click a severity to filter), services list, and a
   details panel with description, solution, evidence and references.
 - **Slow probing** so scans are not blocked: *Normal*, *Polite* (fewer probes, random pauses) or

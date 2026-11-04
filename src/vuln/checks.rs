@@ -53,6 +53,7 @@ impl Check {
             evidence: evidence.into(),
             references: Vec::new(),
             published: None,
+            confidence: super::Confidence::Confirmed,
         }
     }
 }

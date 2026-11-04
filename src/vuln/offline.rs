@@ -212,6 +212,19 @@ impl OfflineDb {
     }
 }
 
+impl OfflineDb {
+    /// CVEs that could affect some version of these major families of a
+    /// product (only an approximate version is known).
+    pub fn lookup_family(&self, vendor: &str, product: &str, families: &[u64]) -> Vec<CveRecord> {
+        let names = aliases(vendor, product);
+        self.cves
+            .iter()
+            .filter(|c| c.rules.iter().any(|r| names.iter().any(|(nv, np)| r.may_match_family(nv, np, families))))
+            .cloned()
+            .collect()
+    }
+}
+
 /// Delete the installed database.
 pub fn uninstall() {
     for p in [installed_path(), info_path()].into_iter().flatten() {
@@ -431,6 +444,19 @@ mod tests {
                 rec("CVE-2024-0001", vec![rule("openbsd", "openssh", "9.8p1")]),
                 rec("CVE-2024-0002", vec![rule("nginx", "nginx", "1.20.1")]),
                 rec("CVE-2024-0003", vec![rule("apache", "http_server", "2.4.50")]),
+                rec(
+                    "CVE-2017-7491",
+                    vec![CpeRule { start_incl: Some("4.0.0".into()), ..rule("samba", "samba", "4.6.4") }],
+                ),
+                rec(
+                    "CVE-2015-0242",
+                    vec![CpeRule {
+                        start_incl: Some("3.0.0".into()),
+                        end_excl: None,
+                        end_incl: Some("3.6.25".into()),
+                        ..rule("samba", "samba", "")
+                    }],
+                ),
             ],
         }
     }
@@ -438,7 +464,7 @@ mod tests {
     #[test]
     fn roundtrip_and_lookup() {
         let db = OfflineDb::from_bytes(&sample().to_bytes()).unwrap();
-        assert_eq!(db.cves.len(), 3);
+        assert_eq!(db.cves.len(), 5);
         assert_eq!(db.cves[0], sample().cves[0]);
         let hits = db.lookup("cpe:2.3:a:openbsd:openssh:9.6:p1:*:*:*:*:*:*");
         assert_eq!(hits.len(), 1);
@@ -446,6 +472,21 @@ mod tests {
         // nginx detected as f5:nginx still matches CVEs filed under nginx:nginx.
         assert_eq!(db.lookup("cpe:2.3:a:f5:nginx:1.18.0:*:*:*:*:*:*:*").len(), 1);
         assert!(db.lookup("garbage").is_empty());
+    }
+
+    /// Approximate versions: which CVEs *could* apply to a version family.
+    #[test]
+    fn family_lookup() {
+        let db = sample();
+        let ids = |f: &[u64]| db.lookup_family("samba", "samba", f).into_iter().map(|c| c.id).collect::<Vec<_>>();
+        assert_eq!(ids(&[4]), ["CVE-2017-7491"]);
+        assert_eq!(ids(&[3]), ["CVE-2015-0242"]);
+        assert_eq!(ids(&[3, 4]).len(), 2);
+        assert!(ids(&[5]).is_empty());
+        // Exact-version lookups are unchanged: a patched 4.15 matches nothing.
+        assert!(db.lookup("cpe:2.3:a:samba:samba:4.15.13:*:*:*:*:*:*:*").is_empty());
+        let r = &db.lookup_family("samba", "samba", &[4])[0].rules[0];
+        assert_eq!(r.fixed_text().as_deref(), Some("fixed in 4.6.4"));
     }
 
     #[test]

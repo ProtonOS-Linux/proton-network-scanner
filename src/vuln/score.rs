@@ -4,6 +4,11 @@
 //! From the CVSS base score, using the bands of CVSS v4.0 (the same as v3.x):
 //! None/Info 0.0 · Low 0.1–3.9 · Medium 4.0–6.9 · High 7.0–8.9 · Critical 9.0–10.0.
 //!
+//! **Review** is not a CVSS band: it marks "needs a manual check" findings —
+//! software whose exact version the scanner cannot see, so known CVEs can be
+//! neither confirmed nor ruled out. Review findings are counted separately
+//! and never enter the Top 10.
+//!
 //! ## PPR — Proton Priority Rating (VPR-style)
 //! Tenable's **VPR** (Vulnerability Priority Rating) is proprietary: its
 //! inputs and model are not public, so no other tool can compute real VPR
@@ -30,12 +35,14 @@ pub enum Severity {
     High,
     Medium,
     Low,
+    /// Needs a manual check (exact version unknown). Never from a CVSS score.
+    Review,
     Info,
 }
 
 impl Severity {
-    pub const ALL: [Severity; 5] =
-        [Severity::Critical, Severity::High, Severity::Medium, Severity::Low, Severity::Info];
+    pub const ALL: [Severity; 6] =
+        [Severity::Critical, Severity::High, Severity::Medium, Severity::Low, Severity::Review, Severity::Info];
 
     pub fn from_score(score: f32) -> Severity {
         match score {
@@ -53,6 +60,7 @@ impl Severity {
             Severity::High => "High",
             Severity::Medium => "Medium",
             Severity::Low => "Low",
+            Severity::Review => "Review",
             Severity::Info => "Info",
         }
     }
@@ -64,6 +72,7 @@ impl Severity {
             Severity::High => (234, 88, 12),
             Severity::Medium => (202, 138, 4),
             Severity::Low => (37, 99, 235),
+            Severity::Review => (124, 58, 237),
             Severity::Info => (107, 114, 128),
         }
     }

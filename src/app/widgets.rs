@@ -90,6 +90,19 @@ pub fn severity_color(s: Severity) -> Color32 {
     Color32::from_rgb(r, g, b)
 }
 
+/// "Confirmed" / "Version match" / "May be backported" / "Unverified",
+/// coloured by how much to trust the finding.
+pub fn confidence_label(ui: &mut egui::Ui, c: crate::vuln::Confidence) -> egui::Response {
+    use crate::vuln::Confidence::*;
+    let (icon, color) = match c {
+        Confirmed => ("✔", GREEN),
+        VersionMatch => ("≈", ui.visuals().text_color()),
+        Backported => ("?", AMBER),
+        Unverified => ("⚠", Color32::from_rgb(139, 92, 246)),
+    };
+    ui.label(RichText::new(format!("{icon} {}", c.label())).color(color)).on_hover_text(c.help())
+}
+
 /// A small filled label like `CRITICAL`.
 pub fn severity_tag(ui: &mut egui::Ui, s: Severity) -> egui::Response {
     let text = s.label().to_uppercase();

@@ -92,6 +92,11 @@
     <binary>proton-ip-scanner</binary>
   </provides>
   <releases>
+    <release version="1.5.0" date="2026-11-04">
+      <description>
+        <p>Every finding shows how sure the scanner is (Confirmed, Version match, May be backported, Unverified). Software whose exact version cannot be seen gets one "needs manual check" item listing the CVEs that could apply, instead of a flood of false positives.</p>
+      </description>
+    </release>
     <release version="1.4.1" date="2026-11-04">
       <description>
         <p>Fewer false positives: CVEs are no longer matched for services whose exact version is unknown (for example Samba, which Nmap reports only as "4").</p>
