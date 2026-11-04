@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Removed
+- Flatpak packaging (`packaging/flatpak/`, `docs/FLATPAK.md`) and its CI job: the app is not going on Flathub.
+  Linux installs come from the .deb and the Proton OS APT repository (which still shows in KDE Discover).
+
 ## 1.4.0 — 2026-11-04
 
 ### New

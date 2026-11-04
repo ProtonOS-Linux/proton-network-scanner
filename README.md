@@ -207,8 +207,6 @@ Proton IP Scanner works on its own. If [Nmap](https://nmap.org) is installed it 
   or another system folder). An Nmap you built or copied into your home folder is used for normal scans only.
 * Where to find it: **Network Scanner → 🔬 Identify with Nmap** and **Vulnerability Scanner → Engine**.
 * Nmap is not included in Proton IP Scanner (it has its own licence); it is found on your system.
-* The **Flatpak** version cannot use Nmap (the sandbox cannot run programs from your computer); use the
-  .deb for Nmap features.
 
 ### Command line
 

@@ -692,9 +692,7 @@ impl App {
         if self.nmap.is_none() {
             ui.add_enabled(false, tool_button("🔬 Identify with Nmap"))
                 .on_disabled_hover_text(crate::nmap::missing_text());
-            if !crate::nmap::in_flatpak() {
-                ui.hyperlink_to("Get Nmap", crate::nmap::DOWNLOAD_URL);
-            }
+            ui.hyperlink_to("Get Nmap", crate::nmap::DOWNLOAD_URL);
             return;
         }
         let enabled = !self.busy() && !self.hosts.is_empty();
@@ -1105,9 +1103,6 @@ impl App {
                                     .color(AMBER),
                                 );
                             }
-                        }
-                        None if crate::nmap::in_flatpak() => {
-                            ui.label(RichText::new(crate::nmap::missing_text()).small().weak());
                         }
                         None => {
                             ui.horizontal(|ui| {

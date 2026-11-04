@@ -486,7 +486,7 @@ impl VulnTab {
             if self.engine == vuln::Engine::Nmap {
                 ui.checkbox(&mut self.deep, "Deep scan").on_hover_text(DEEP_HELP);
             }
-            if self.nmap.is_none() && !crate::nmap::in_flatpak() {
+            if self.nmap.is_none() {
                 ui.hyperlink_to("Get Nmap", crate::nmap::DOWNLOAD_URL)
                     .on_hover_text("Optional. After installing, use Settings → Look again.");
             }

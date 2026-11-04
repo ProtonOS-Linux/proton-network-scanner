@@ -2,4 +2,3 @@ target/
 dist/
 *.pfx
 *.PRIVATE.asc
-ci-flatpak.yml

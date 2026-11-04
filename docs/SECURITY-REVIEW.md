@@ -191,9 +191,6 @@ Nmap is a separate, widely used program. Using it adds three kinds of risk, hand
 **Stop / cancel**: the process is killed (user Nmap) or its output pipe is closed (root Nmap, which then exits
 at its next progress line, ≤ 2 s). Tested: Stop returns in under 2 s.
 
-**Flatpak**: the sandboxed version does not use Nmap at all (it cannot see host programs, and the permission
-that would allow it, `org.freedesktop.Flatpak`, is a sandbox escape the app does not request).
-
 **Licensing**: Nmap is not bundled or downloaded (it has its own licence, and Npcap's terms differ); the .deb
 only *recommends* it and the app links to nmap.org.
 

@@ -128,28 +128,13 @@ fn candidates() -> Vec<PathBuf> {
     out
 }
 
-/// Inside a Flatpak sandbox, programs installed on the computer (like Nmap)
-/// are not visible, and reaching them would need a sandbox escape — which
-/// this app deliberately does not ask for.
-pub fn in_flatpak() -> bool {
-    Path::new("/.flatpak-info").exists()
-}
-
 /// Why the Nmap features are unavailable, for tooltips and Settings.
 pub fn missing_text() -> &'static str {
-    if in_flatpak() {
-        "Nmap features are not available in the Flatpak version: the sandbox cannot run programs installed on \
-         your computer. Use the .deb package (or the Windows installer) for Nmap."
-    } else {
-        "Optional: install Nmap (Linux: your package manager, e.g. 'sudo apt install nmap'; Windows: nmap.org), \
-         then Settings → Look again."
-    }
+    "Optional: install Nmap (Linux: your package manager, e.g. 'sudo apt install nmap'; Windows: nmap.org), \
+     then Settings → Look again."
 }
 
 fn locate() -> Option<NmapInfo> {
-    if in_flatpak() {
-        return None;
-    }
     for path in candidates() {
         if !path.is_file() {
             continue;
