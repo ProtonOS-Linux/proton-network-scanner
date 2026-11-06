@@ -1,15 +1,16 @@
-# Security & resource review — Proton IP Scanner 1.4.0
+# Security & resource review — Proton IP Scanner 1.6.0
 
-Reviewed: 2026-11-04 · Scope: all code in `src/`, the dependency tree (413 crates), packaging.
-Covers 1.0, the 1.1 additions (vulnerability scanner, reports, ping test, mDNS/LLMNR names) and the
-1.2 additions (offline CVE database, UPnP names, router DNS, multicast name sweep, no cross-scan cache),
-the 1.3 installers and the 1.4 optional Nmap engine (section 17).
+Reviewed: 2026-11-06 · Scope: all code in `src/`, the dependency tree (413 crates in `Cargo.lock`), packaging.
+Covers 1.0, the 1.1 additions (vulnerability scanner, reports, ping test, mDNS/LLMNR names), the 1.2 additions
+(offline CVE database, UPnP names, router DNS, multicast name sweep, no cross-scan cache), the 1.3 installers,
+the 1.4 optional Nmap engine (section 17), the 1.5 confidence labels / "needs manual check" findings, and the
+1.6 review marks, comments and "show in folder" (section 18).
 
 ## Result
 
 | Check | Result |
 |---|---|
-| `cargo audit` (RustSec database, 1 403 advisories, 413 crates) | **0 vulnerabilities, 0 warnings** |
+| `cargo audit` (RustSec database, 1 422 advisories, 413 crates) | **0 vulnerabilities, 0 warnings** |
 | `cargo clippy --all-targets -D warnings` | **clean** |
 | Unit + integration tests | **95 passed** (2 ignored: need a real network / internet), incl. runs against real Nmap 7.94 |
 | Fuzz tests (random + mutated input) | 20 000 random inputs × 10 parsers (incl. SSDP, UPnP XML, mDNS records), 30 000 mutated mDNS/NetBIOS replies, 5 000 random JSON documents, 6 000 random/garbage offline-database files, 3 000 mutated Nmap XML outputs — **no panics** |

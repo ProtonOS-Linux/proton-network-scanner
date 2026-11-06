@@ -45,6 +45,8 @@ Part of the [Proton OS](https://www.protonos.org) family.
 ### Vulnerability Scanner tab
 <img src="docs/screenshot-vuln.png" width="860" alt="Vulnerability Scanner tab: severity summary, Top 10 by priority, finding details">
 
+Example: [sample PDF report](docs/sample-report.pdf) (demo data).
+
 - Assess the **selected device**, all **live devices from the Network Scanner tab**, or any IP range.
 - **Three port lists**: *Standard* (52 ports, fast), *Comprehensive* (1,298 ports: all of 1-1024 plus
   ~270 registered admin/database/IoT/industrial ports) and *Full scan* (all 65,535) — or your own.
@@ -136,9 +138,15 @@ sometimes classified as "hacking tools"), report the false positive at
 
 **Check for vulnerabilities**
 1. Open the **Vulnerability Scanner** tab. Targets default to the devices you just found.
-2. Pick ports (the 52-port *Vulnerability set* is a good start) and a speed.
+2. Pick ports (the 52-port *Standard* set is a good start), a speed and the engine (*Built-in*, or *Nmap*
+   if it is installed).
 3. Press **▶ Start assessment**. Findings appear as they are found; CVE lookups run at the end.
-4. **Export report** → Excel or PDF (saved in your Documents folder).
+4. Click a finding to see its details. Tick **Reviewed** and write a **comment** (e.g. "patched, false
+   positive") — the *Review* column then shows **✔ Done**, and both are printed in the reports.
+5. **Export report** → Excel or PDF. It is saved in your Documents folder, and the folder opens with the
+   report selected.
+
+<img src="docs/screenshot-review.png" width="860" alt="All findings with the Review column; a Needs manual check item marked Reviewed with a comment">
 
 Optional: a free [NVD API key](https://nvd.nist.gov/developers/request-an-api-key) (Settings, or the
 `NVD_API_KEY` environment variable) makes CVE lookups about 10× faster.
@@ -184,8 +192,19 @@ Status dots: 🟢 answered ping · 🟠 online but blocks ping (found via ARP) �
 | **PPR** | *Proton Priority Rating* 0–10: `0.6 × CVSS + 0.4 × threat`, where threat = 10 if KEV, otherwise `10 × √EPSS` (2.0 if no EPSS yet). Tenable's VPR is proprietary; PPR follows the same idea with public data. The Top 10 is ordered by PPR. |
 
 CVE matches are based on the version a service announces (like other scanners' remote version
-checks). Linux distributions back-port fixes without changing version numbers; such findings are
-marked so you can confirm them with the installed package version.
+checks), and only when that version is exact. Every finding shows its **confidence**:
+
+| Confidence | Meaning |
+|---|---|
+| ✔ **Confirmed** | Seen directly: a configuration check, or an Nmap script that tested for it. |
+| ≈ **Version match** | The service announced an exact version that NVD lists as vulnerable. |
+| ? **May be backported** | Version match on a Linux distribution build — distributions fix bugs without changing the version, so check the installed package. |
+| ⚠ **Unverified** | Only an approximate version is visible (e.g. Samba "4"). |
+
+Software with only an approximate version gets one **Needs manual check** item (severity **Review**, purple
+tile) instead of dozens of possible CVEs: it lists the CVEs that could apply with their "fixed in" versions and
+says how to check the installed version. Review items are not counted as vulnerabilities and never enter the
+Top 10. **Show unverified CVEs** lists each of them separately instead.
 
 ### Nmap (optional)
 
@@ -230,7 +249,7 @@ proton-ip-scanner --help
 
 Options: `--ports`, `--no-ports`, `--threads N`, `--timeout MS`, `--banners`, `--no-names`, `--slow`,
 `--csv`, `--nmap`, `--deep`; with `--vuln`: `--report pdf|xlsx`, `--cve online|offline|off` (`--offline` = offline), `--stealth`,
-`--no-logins`; database: `--update-db`, `--export-db`, `--import-db <file>`.
+`--no-logins`, `--show-unverified`; database: `--update-db`, `--export-db`, `--import-db <file>`.
 
 Environment: `PROTON_IP_SCANNER_THEME=light|dark` forces a theme; `PROTON_IP_SCANNER_DEMO=1` (or `vuln`,
 `ping`) shows example data for screenshots without scanning.
@@ -302,7 +321,7 @@ sudo apt install build-essential pkg-config libxkbcommon-dev libgl1-mesa-dev
 #   cargo zigbuild --release --target x86_64-unknown-linux-gnu.2.31
 #   cargo deb --target x86_64-unknown-linux-gnu --no-build
 # Windows installer (NSIS 3, from Linux or Windows):
-#   makensis -DVERSION=1.4.0 -DEXE=<path to .exe> -DOUTDIR=dist packaging/windows/installer.nsi
+#   makensis -DVERSION=1.6.0 -DEXE=<path to .exe> -DOUTDIR=dist packaging/windows/installer.nsi
 
 git clone https://github.com/ProtonOS-Linux/proton-network-scanner.git
 cd proton-network-scanner

@@ -16,18 +16,18 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
 endobj
 6 0 obj
-<< /Title (Vulnerability Assessment Report) /Producer (Proton IP Scanner 1.1.0) >>
+<< /Title (Vulnerability Assessment Report) /Producer (Proton IP Scanner 1.6.0) >>
 endobj
 7 0 obj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 8 0 R >>
 endobj
 8 0 obj
-<< /Length 12141 >>
+<< /Length 13179 >>
 stream
 0.745 0.094 0.549 rg 0.00 746.00 595.00 96.00 re f
 0.431 0.055 0.322 rg 0.00 742.00 595.00 4.00 re f
 BT /F2 22.0 Tf 1.000 1.000 1.000 rg 48.00 792.00 Td (Vulnerability Assessment Report) Tj ET
-BT /F1 10.0 Tf 1.000 0.894 0.961 rg 48.00 770.00 Td (Proton IP Scanner 1.1.0  |  2026-11-02 22:15 UTC) Tj ET
+BT /F1 10.0 Tf 1.000 0.894 0.961 rg 48.00 770.00 Td (Proton IP Scanner 1.6.0  |  2026-11-06 15:57 UTC) Tj ET
 BT /F2 9.0 Tf 0.373 0.400 0.451 rg 48.00 715.00 Td (Targets) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 158.00 715.00 Td (192.168.1.1-254 \(DEMO DATA\)) Tj ET
 BT /F2 9.0 Tf 0.373 0.400 0.451 rg 48.00 700.00 Td (Hosts assessed) Tj ET
@@ -35,163 +35,179 @@ BT /F1 9.0 Tf 0.118 0.129 0.161 rg 158.00 700.00 Td (3) Tj ET
 BT /F2 9.0 Tf 0.373 0.400 0.451 rg 48.00 685.00 Td (Open services) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 158.00 685.00 Td (6) Tj ET
 BT /F2 9.0 Tf 0.373 0.400 0.451 rg 48.00 670.00 Td (Scan speed) Tj ET
-BT /F1 9.0 Tf 0.118 0.129 0.161 rg 158.00 670.00 Td (Normal \(fast\)) Tj ET
+BT /F1 9.0 Tf 0.118 0.129 0.161 rg 158.00 670.00 Td (Normal \(fast\) \267 Nmap 7.94SVN) Tj ET
 BT /F2 9.0 Tf 0.373 0.400 0.451 rg 48.00 655.00 Td (Duration) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 158.00 655.00 Td (41 seconds) Tj ET
 BT /F2 9.0 Tf 0.373 0.400 0.451 rg 48.00 640.00 Td (Vulnerability data) Tj ET
-BT /F1 9.0 Tf 0.118 0.129 0.161 rg 158.00 640.00 Td (NVD \(CVSS, CISA KEV\) and FIRST EPSS, looked up online) Tj ET
-BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 614.00 Td (Summary) Tj ET
-0.745 0.094 0.549 RG 0.6 w 48.00 608.00 m 547.00 608.00 l S
-0.725 0.110 0.110 rg 48.00 546.00 93.40 52.00 re f
-BT /F2 20.0 Tf 1.000 1.000 1.000 rg 89.14 570.00 Td (3) Tj ET
-BT /F2 9.0 Tf 1.000 1.000 1.000 rg 79.44 555.00 Td (Critical) Tj ET
-0.918 0.345 0.047 rg 149.40 546.00 93.40 52.00 re f
-BT /F2 20.0 Tf 1.000 1.000 1.000 rg 190.54 570.00 Td (2) Tj ET
-BT /F2 9.0 Tf 1.000 1.000 1.000 rg 186.10 555.00 Td (High) Tj ET
-0.792 0.541 0.016 rg 250.80 546.00 93.40 52.00 re f
-BT /F2 20.0 Tf 1.000 1.000 1.000 rg 291.94 570.00 Td (4) Tj ET
-BT /F2 9.0 Tf 1.000 1.000 1.000 rg 280.50 555.00 Td (Medium) Tj ET
-0.145 0.388 0.922 rg 352.20 546.00 93.40 52.00 re f
-BT /F2 20.0 Tf 1.000 1.000 1.000 rg 393.34 570.00 Td (1) Tj ET
-BT /F2 9.0 Tf 1.000 1.000 1.000 rg 389.90 555.00 Td (Low) Tj ET
-0.420 0.447 0.502 rg 453.60 546.00 93.40 52.00 re f
-BT /F2 20.0 Tf 1.000 1.000 1.000 rg 494.74 570.00 Td (2) Tj ET
-BT /F2 9.0 Tf 1.000 1.000 1.000 rg 492.05 555.00 Td (Info) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 530.55 Td (Counts are findings per host. 10 distinct vulnerabilities \(excluding informational\), 2 of them known to be exploited \(CISA) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 518.40 Td (KEV\).) Tj ET
-BT /F2 9.0 Tf 0.706 0.325 0.035 rg 48.00 506.25 Td (Note: Demo note: NVD could not be reached \(example\).) Tj ET
-BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 477.55 Td (Top 10 vulnerabilities by priority) Tj ET
-0.745 0.094 0.549 RG 0.6 w 48.00 471.55 m 547.00 471.55 l S
-0.431 0.055 0.322 rg 48.00 448.55 499.00 15.00 re f
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 52.00 452.55 Td (#) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 68.00 452.55 Td (Severity) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 126.00 452.55 Td (ID) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 204.00 452.55 Td (Vulnerability) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 398.00 452.55 Td (Hosts) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 428.00 452.55 Td (CVSS) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 462.00 452.55 Td (EPSS) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 496.00 452.55 Td (PPR) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 524.00 452.55 Td (KEV) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 437.55 Td (1) Tj ET
-0.725 0.110 0.110 rg 68.00 434.55 44.99 12.00 re f
-BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 437.55 Td (CRITICAL) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 437.55 Td (CVE-2021-42013) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 437.55 Td (Apache httpd 2.4.49: Path traversal and remote cod\205) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 437.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 437.55 Td (9.8) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 437.55 Td (94.0%) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 437.55 Td (9.9) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 437.55 Td (Yes) Tj ET
-0.965 0.969 0.976 rg 48.00 418.55 499.00 15.00 re f
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 422.55 Td (2) Tj ET
+BT /F1 9.0 Tf 0.118 0.129 0.161 rg 158.00 640.00 Td (NVD \(CVSS, CISA KEV\) and FIRST EPSS, looked up online during the scan) Tj ET
+BT /F2 9.0 Tf 0.373 0.400 0.451 rg 48.00 625.00 Td (Reviewed) Tj ET
+BT /F1 9.0 Tf 0.118 0.129 0.161 rg 158.00 625.00 Td (1 of 13 findings marked as reviewed) Tj ET
+BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 599.00 Td (Summary) Tj ET
+0.745 0.094 0.549 RG 0.6 w 48.00 593.00 m 547.00 593.00 l S
+0.725 0.110 0.110 rg 48.00 531.00 76.50 52.00 re f
+BT /F2 20.0 Tf 1.000 1.000 1.000 rg 80.69 555.00 Td (3) Tj ET
+BT /F2 9.0 Tf 1.000 1.000 1.000 rg 70.99 540.00 Td (Critical) Tj ET
+0.918 0.345 0.047 rg 132.50 531.00 76.50 52.00 re f
+BT /F2 20.0 Tf 1.000 1.000 1.000 rg 165.19 555.00 Td (2) Tj ET
+BT /F2 9.0 Tf 1.000 1.000 1.000 rg 160.75 540.00 Td (High) Tj ET
+0.792 0.541 0.016 rg 217.00 531.00 76.50 52.00 re f
+BT /F2 20.0 Tf 1.000 1.000 1.000 rg 249.69 555.00 Td (4) Tj ET
+BT /F2 9.0 Tf 1.000 1.000 1.000 rg 238.25 540.00 Td (Medium) Tj ET
+0.145 0.388 0.922 rg 301.50 531.00 76.50 52.00 re f
+BT /F2 20.0 Tf 1.000 1.000 1.000 rg 334.19 555.00 Td (1) Tj ET
+BT /F2 9.0 Tf 1.000 1.000 1.000 rg 330.75 540.00 Td (Low) Tj ET
+0.486 0.227 0.929 rg 386.00 531.00 76.50 52.00 re f
+BT /F2 20.0 Tf 1.000 1.000 1.000 rg 418.69 555.00 Td (1) Tj ET
+BT /F2 9.0 Tf 1.000 1.000 1.000 rg 408.74 540.00 Td (Review) Tj ET
+0.420 0.447 0.502 rg 470.50 531.00 76.50 52.00 re f
+BT /F2 20.0 Tf 1.000 1.000 1.000 rg 503.19 555.00 Td (2) Tj ET
+BT /F2 9.0 Tf 1.000 1.000 1.000 rg 500.50 540.00 Td (Info) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 515.55 Td (Counts are findings per host. 10 distinct vulnerabilities \(excluding informational\), 2 of them known to be exploited \(CISA) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 503.40 Td (KEV\).) Tj ET
+BT /F2 9.0 Tf 0.706 0.325 0.035 rg 48.00 491.25 Td (Note: Demo note: NVD could not be reached \(example\).) Tj ET
+BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 462.55 Td (Top 10 vulnerabilities by priority) Tj ET
+0.745 0.094 0.549 RG 0.6 w 48.00 456.55 m 547.00 456.55 l S
+0.431 0.055 0.322 rg 48.00 433.55 499.00 15.00 re f
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 52.00 437.55 Td (#) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 68.00 437.55 Td (Severity) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 126.00 437.55 Td (ID) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 204.00 437.55 Td (Vulnerability) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 366.00 437.55 Td (Hosts) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 396.00 437.55 Td (CVSS) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 430.00 437.55 Td (EPSS) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 464.00 437.55 Td (PPR) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 492.00 437.55 Td (KEV) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 519.00 437.55 Td (Reviewed) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 422.55 Td (1) Tj ET
 0.725 0.110 0.110 rg 68.00 419.55 44.99 12.00 re f
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 422.55 Td (CRITICAL) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 422.55 Td (PIS-0003) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 422.55 Td (Redis database accessible without authentication) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 422.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 422.55 Td (9.3) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 422.55 Td (-) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 422.55 Td (9.2) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 422.55 Td () Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 407.55 Td (3) Tj ET
-0.918 0.345 0.047 rg 68.00 404.55 28.75 12.00 re f
-BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 407.55 Td (HIGH) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 407.55 Td (CVE-2021-41773) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 407.55 Td (Apache httpd 2.4.49: Path traversal and file disclos\205) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 407.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 407.55 Td (7.5) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 407.55 Td (94.0%) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 407.55 Td (8.5) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 407.55 Td (Yes) Tj ET
-0.965 0.969 0.976 rg 48.00 388.55 499.00 15.00 re f
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 392.55 Td (4) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 422.55 Td (CVE-2021-42013) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 422.55 Td (Apache httpd 2.4.49: Path traversal and re\205) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 422.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 422.55 Td (9.8) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 422.55 Td (94.0%) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 422.55 Td (9.9) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 422.55 Td (Yes) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 422.55 Td () Tj ET
+0.965 0.969 0.976 rg 48.00 403.55 499.00 15.00 re f
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 407.55 Td (2) Tj ET
+0.725 0.110 0.110 rg 68.00 404.55 44.99 12.00 re f
+BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 407.55 Td (CRITICAL) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 407.55 Td (PIS-0003) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 407.55 Td (Redis database accessible without authen\205) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 407.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 407.55 Td (9.3) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 407.55 Td (-) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 407.55 Td (9.2) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 407.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 407.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 392.55 Td (3) Tj ET
 0.918 0.345 0.047 rg 68.00 389.55 28.75 12.00 re f
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 392.55 Td (HIGH) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 392.55 Td (CVE-2024-6387) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 392.55 Td (OpenSSH 8.9p1: Signal handler race condition in s\205) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 392.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 392.55 Td (8.1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 392.55 Td (40.0%) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 392.55 Td (7.4) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 392.55 Td () Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 377.55 Td (5) Tj ET
-0.725 0.110 0.110 rg 68.00 374.55 44.99 12.00 re f
-BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 377.55 Td (CRITICAL) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 377.55 Td (CVE-2023-38408) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 377.55 Td (OpenSSH 8.9p1: Remote code execution through s\205) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 377.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 377.55 Td (9.8) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 377.55 Td (6.0%) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 377.55 Td (6.9) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 377.55 Td () Tj ET
-0.965 0.969 0.976 rg 48.00 358.55 499.00 15.00 re f
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 362.55 Td (6) Tj ET
-0.792 0.541 0.016 rg 68.00 359.55 40.41 12.00 re f
-BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 362.55 Td (MEDIUM) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 362.55 Td (PIS-0002) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 362.55 Td (Anonymous FTP login allowed) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 362.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 362.55 Td (6.9) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 362.55 Td (-) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 362.55 Td (6.5) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 362.55 Td () Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 347.55 Td (7) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 392.55 Td (CVE-2021-41773) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 392.55 Td (Apache httpd 2.4.49: Path traversal and fil\205) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 392.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 392.55 Td (7.5) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 392.55 Td (94.0%) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 392.55 Td (8.5) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 392.55 Td (Yes) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 392.55 Td () Tj ET
+0.965 0.969 0.976 rg 48.00 373.55 499.00 15.00 re f
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 377.55 Td (4) Tj ET
+0.918 0.345 0.047 rg 68.00 374.55 28.75 12.00 re f
+BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 377.55 Td (HIGH) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 377.55 Td (CVE-2024-6387) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 377.55 Td (OpenSSH 8.9p1: Signal handler race cond\205) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 377.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 377.55 Td (8.1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 377.55 Td (40.0%) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 377.55 Td (7.4) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 377.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 377.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 362.55 Td (5) Tj ET
+0.725 0.110 0.110 rg 68.00 359.55 44.99 12.00 re f
+BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 362.55 Td (CRITICAL) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 362.55 Td (CVE-2023-38408) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 362.55 Td (OpenSSH 8.9p1: Remote code execution t\205) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 362.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 362.55 Td (9.8) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 362.55 Td (6.0%) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 362.55 Td (6.9) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 362.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 362.55 Td () Tj ET
+0.965 0.969 0.976 rg 48.00 343.55 499.00 15.00 re f
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 347.55 Td (6) Tj ET
 0.792 0.541 0.016 rg 68.00 344.55 40.41 12.00 re f
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 347.55 Td (MEDIUM) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 347.55 Td (CVE-2023-48795) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 347.55 Td (OpenSSH 8.9p1: Terrapin attack: prefix truncation \205) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 347.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 347.55 Td (5.9) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 347.55 Td (55.0%) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 347.55 Td (6.5) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 347.55 Td () Tj ET
-0.965 0.969 0.976 rg 48.00 328.55 499.00 15.00 re f
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 332.55 Td (8) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 347.55 Td (PIS-0002) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 347.55 Td (Anonymous FTP login allowed) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 347.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 347.55 Td (6.9) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 347.55 Td (-) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 347.55 Td (6.5) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 347.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 347.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 332.55 Td (7) Tj ET
 0.792 0.541 0.016 rg 68.00 329.55 40.41 12.00 re f
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 332.55 Td (MEDIUM) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 332.55 Td (PIS-0001) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 332.55 Td (Telnet service enabled \(cleartext remote login\)) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 332.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 332.55 Td (6.0) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 332.55 Td (-) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 332.55 Td (5.6) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 332.55 Td () Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 317.55 Td (9) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 332.55 Td (CVE-2023-48795) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 332.55 Td (OpenSSH 8.9p1: Terrapin attack: prefix tr\205) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 332.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 332.55 Td (5.9) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 332.55 Td (55.0%) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 332.55 Td (6.5) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 332.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 332.55 Td () Tj ET
+0.965 0.969 0.976 rg 48.00 313.55 499.00 15.00 re f
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 317.55 Td (8) Tj ET
 0.792 0.541 0.016 rg 68.00 314.55 40.41 12.00 re f
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 317.55 Td (MEDIUM) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 317.55 Td (PIS-0009) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 317.55 Td (Login page served over unencrypted HTTP) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 317.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 317.55 Td (5.9) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 317.55 Td (-) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 317.55 Td (5.1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 317.55 Td () Tj ET
-0.965 0.969 0.976 rg 48.00 298.55 499.00 15.00 re f
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 302.55 Td (10) Tj ET
-0.145 0.388 0.922 rg 68.00 299.55 27.50 12.00 re f
-BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 302.55 Td (LOW) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 302.55 Td (PIS-0013) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 302.55 Td (Unencrypted FTP service) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 398.00 302.55 Td (1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 428.00 302.55 Td (2.1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 462.00 302.55 Td (-) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 496.00 302.55 Td (2.1) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 524.00 302.55 Td () Tj ET
-BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 270.55 Td (Findings) Tj ET
-0.745 0.094 0.549 RG 0.6 w 48.00 264.55 m 547.00 264.55 l S
-0.725 0.110 0.110 rg 48.00 239.55 44.99 12.00 re f
-BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 242.55 Td (CRITICAL) Tj ET
-BT /F2 9.5 Tf 0.725 0.110 0.110 rg 100.99 242.55 Td (CVE-2021-42013  |  KNOWN EXPLOITED \(CISA KEV\)) Tj ET
-BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 226.52 Td (Apache httpd 2.4.49: Path traversal and remote code execution in Apache HTTP Server 2.4.49 and) Tj ET
-BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 212.35 Td (2.4.50) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 200.27 Td (CVSS 3.1: 9.8 | EPSS: 94.00% \(percentile 97\) | PPR: 9.9 | Published: 2024-01-01) Tj ET
-BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 189.85 Td (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H) Tj ET
-BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 178.15 Td (Affected \(1\): 192.168.1.10:80 - Apache httpd 2.4.49) Tj ET
-BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 166.00 Td (Path traversal and remote code execution in Apache HTTP Server 2.4.49 and 2.4.50. \(Demo data for screenshots.\)) Tj ET
-BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 151.85 Td (Solution: Update Apache httpd 2.4.49 to the latest version.) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 140.22 Td (Evidence: Version-based match: Apache httpd 2.4.49 announced on port 80.) Tj ET
-BT /F3 7.5 Tf 0.145 0.388 0.922 rg 56.00 129.80 Td (https://nvd.nist.gov/vuln/detail/CVE-2021-42013) Tj ET
-0.863 0.878 0.902 RG 0.6 w 48.00 121.55 m 547.00 121.55 l S
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 317.55 Td (PIS-0001) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 317.55 Td (Telnet service enabled \(cleartext remote lo\205) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 317.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 317.55 Td (6.0) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 317.55 Td (-) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 317.55 Td (5.6) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 317.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 317.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 302.55 Td (9) Tj ET
+0.792 0.541 0.016 rg 68.00 299.55 40.41 12.00 re f
+BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 302.55 Td (MEDIUM) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 302.55 Td (PIS-0009) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 302.55 Td (Login page served over unencrypted HTTP) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 302.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 302.55 Td (5.9) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 302.55 Td (-) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 302.55 Td (5.1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 302.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 302.55 Td () Tj ET
+0.965 0.969 0.976 rg 48.00 283.55 499.00 15.00 re f
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 287.55 Td (10) Tj ET
+0.145 0.388 0.922 rg 68.00 284.55 27.50 12.00 re f
+BT /F2 7.5 Tf 1.000 1.000 1.000 rg 73.00 287.55 Td (LOW) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 126.00 287.55 Td (PIS-0013) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 204.00 287.55 Td (Unencrypted FTP service) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 366.00 287.55 Td (1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 396.00 287.55 Td (2.1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 430.00 287.55 Td (-) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 464.00 287.55 Td (2.1) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 492.00 287.55 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 519.00 287.55 Td () Tj ET
+BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 255.55 Td (Findings) Tj ET
+0.745 0.094 0.549 RG 0.6 w 48.00 249.55 m 547.00 249.55 l S
+0.725 0.110 0.110 rg 48.00 224.55 44.99 12.00 re f
+BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 227.55 Td (CRITICAL) Tj ET
+BT /F2 9.5 Tf 0.725 0.110 0.110 rg 100.99 227.55 Td (CVE-2021-42013  |  KNOWN EXPLOITED \(CISA KEV\)) Tj ET
+BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 211.52 Td (Apache httpd 2.4.49: Path traversal and remote code execution in Apache HTTP Server 2.4.49 and) Tj ET
+BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 197.35 Td (2.4.50) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 185.27 Td (CVSS 3.1: 9.8 | EPSS: 94.00% \(percentile 97\) | PPR: 9.9 | Published: 2024-01-01 | Confidence: Version match) Tj ET
+BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 174.85 Td (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H) Tj ET
+BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 163.15 Td (Affected \(1\): 192.168.1.10:80 - Apache httpd 2.4.49) Tj ET
+BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 151.00 Td (Path traversal and remote code execution in Apache HTTP Server 2.4.49 and 2.4.50. \(Demo data for screenshots.\)) Tj ET
+BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 136.85 Td (Solution: Update Apache httpd 2.4.49 to the latest version.) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 125.22 Td (Evidence: Version-based match: Apache httpd 2.4.49 announced on port 80.) Tj ET
+BT /F3 7.5 Tf 0.145 0.388 0.922 rg 56.00 114.80 Td (https://nvd.nist.gov/vuln/detail/CVE-2021-42013) Tj ET
+0.863 0.878 0.902 RG 0.6 w 48.00 106.55 m 547.00 106.55 l S
 0.863 0.878 0.902 RG 0.6 w 48.00 52.00 m 547.00 52.00 l S
 BT /F1 8 Tf 0.373 0.400 0.451 rg 48.00 40.00 Td (Proton IP Scanner  |  Vulnerability Assessment Report) Tj ET
 BT /F1 8 Tf 0.373 0.400 0.451 rg 506.08 40.00 Td (Page 1 of 4) Tj ET
@@ -202,14 +218,14 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 10 0 R >>
 endobj
 10 0 obj
-<< /Length 6716 >>
+<< /Length 6856 >>
 stream
 0.745 0.094 0.549 rg 0.00 836.00 595.00 6.00 re f
 0.725 0.110 0.110 rg 48.00 773.00 44.99 12.00 re f
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 776.00 Td (CRITICAL) Tj ET
 BT /F2 9.5 Tf 0.431 0.055 0.322 rg 100.99 776.00 Td (PIS-0003  ) Tj ET
 BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 759.98 Td (Redis database accessible without authentication) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 747.90 Td (CVSS 4.0: 9.3 | EPSS: - | PPR: 9.2) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 747.90 Td (CVSS 4.0: 9.3 | EPSS: - | PPR: 9.2 | Confidence: Confirmed) Tj ET
 BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 737.48 Td (CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N) Tj ET
 BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 725.78 Td (Affected \(1\): 192.168.1.10:6379) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 713.62 Td (The Redis server answers commands without a password. Anyone who can reach it can read and delete all data, and) Tj ET
@@ -222,7 +238,7 @@ BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 663.55 Td (Evidence: INFO command answe
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 637.00 Td (HIGH) Tj ET
 BT /F2 9.5 Tf 0.725 0.110 0.110 rg 84.75 637.00 Td (CVE-2021-41773  |  KNOWN EXPLOITED \(CISA KEV\)) Tj ET
 BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 620.97 Td (Apache httpd 2.4.49: Path traversal and file disclosure in Apache HTTP Server 2.4.49) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 608.90 Td (CVSS 3.1: 7.5 | EPSS: 94.00% \(percentile 97\) | PPR: 8.5 | Published: 2024-01-01) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 608.90 Td (CVSS 3.1: 7.5 | EPSS: 94.00% \(percentile 97\) | PPR: 8.5 | Published: 2024-01-01 | Confidence: Version match) Tj ET
 BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 598.47 Td (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N) Tj ET
 BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 586.77 Td (Affected \(1\): 192.168.1.10:80 - Apache httpd 2.4.49) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 574.62 Td (Path traversal and file disclosure in Apache HTTP Server 2.4.49. \(Demo data for screenshots.\)) Tj ET
@@ -234,7 +250,7 @@ BT /F3 7.5 Tf 0.145 0.388 0.922 rg 56.00 538.42 Td (https://nvd.nist.gov/vuln/de
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 512.17 Td (HIGH) Tj ET
 BT /F2 9.5 Tf 0.431 0.055 0.322 rg 84.75 512.17 Td (CVE-2024-6387  ) Tj ET
 BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 496.15 Td (OpenSSH 8.9p1: Signal handler race condition in sshd \(regreSSHion\)) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 484.07 Td (CVSS 3.1: 8.1 | EPSS: 40.00% \(percentile 70\) | PPR: 7.4 | Published: 2024-01-01) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 484.07 Td (CVSS 3.1: 8.1 | EPSS: 40.00% \(percentile 70\) | PPR: 7.4 | Published: 2024-01-01 | Confidence: May be backported) Tj ET
 BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 473.65 Td (CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H) Tj ET
 BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 461.95 Td (Affected \(1\): 192.168.1.10:22 - OpenSSH 8.9p1) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 449.80 Td (Signal handler race condition in sshd \(regreSSHion\). \(Demo data for screenshots.\)) Tj ET
@@ -246,7 +262,7 @@ BT /F3 7.5 Tf 0.145 0.388 0.922 rg 56.00 413.60 Td (https://nvd.nist.gov/vuln/de
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 387.35 Td (CRITICAL) Tj ET
 BT /F2 9.5 Tf 0.431 0.055 0.322 rg 100.99 387.35 Td (CVE-2023-38408  ) Tj ET
 BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 371.32 Td (OpenSSH 8.9p1: Remote code execution through ssh-agent PKCS#11 provider loading) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 359.25 Td (CVSS 3.1: 9.8 | EPSS: 6.00% \(percentile 53\) | PPR: 6.9 | Published: 2024-01-01) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 359.25 Td (CVSS 3.1: 9.8 | EPSS: 6.00% \(percentile 53\) | PPR: 6.9 | Published: 2024-01-01 | Confidence: May be backported) Tj ET
 BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 348.82 Td (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H) Tj ET
 BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 337.12 Td (Affected \(1\): 192.168.1.10:22 - OpenSSH 8.9p1) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 324.97 Td (Remote code execution through ssh-agent PKCS#11 provider loading. \(Demo data for screenshots.\)) Tj ET
@@ -258,7 +274,7 @@ BT /F3 7.5 Tf 0.145 0.388 0.922 rg 56.00 288.77 Td (https://nvd.nist.gov/vuln/de
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 262.52 Td (MEDIUM) Tj ET
 BT /F2 9.5 Tf 0.431 0.055 0.322 rg 96.41 262.52 Td (PIS-0002  ) Tj ET
 BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 246.50 Td (Anonymous FTP login allowed) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 234.42 Td (CVSS 4.0: 6.9 | EPSS: - | PPR: 6.5) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 234.42 Td (CVSS 4.0: 6.9 | EPSS: - | PPR: 6.5 | Confidence: Confirmed) Tj ET
 BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 224.00 Td (CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N) Tj ET
 BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 212.30 Td (Affected \(1\): 192.168.1.60:21) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 200.15 Td (The FTP server lets anyone log in as 'anonymous' without a password. Files it shares can be read \(and possibly uploaded\)) Tj ET
@@ -277,14 +293,14 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 12 0 R >>
 endobj
 12 0 obj
-<< /Length 7979 >>
+<< /Length 7312 >>
 stream
 0.745 0.094 0.549 rg 0.00 836.00 595.00 6.00 re f
 0.792 0.541 0.016 rg 48.00 773.00 40.41 12.00 re f
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 776.00 Td (MEDIUM) Tj ET
 BT /F2 9.5 Tf 0.431 0.055 0.322 rg 96.41 776.00 Td (CVE-2023-48795  ) Tj ET
 BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 759.98 Td (OpenSSH 8.9p1: Terrapin attack: prefix truncation of the SSH transport) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 747.90 Td (CVSS 3.1: 5.9 | EPSS: 55.00% \(percentile 78\) | PPR: 6.5 | Published: 2024-01-01) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 747.90 Td (CVSS 3.1: 5.9 | EPSS: 55.00% \(percentile 78\) | PPR: 6.5 | Published: 2024-01-01 | Confidence: May be backported) Tj ET
 BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 737.48 Td (CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N) Tj ET
 BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 725.78 Td (Affected \(1\): 192.168.1.10:22 - OpenSSH 8.9p1) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 713.62 Td (Terrapin attack: prefix truncation of the SSH transport. \(Demo data for screenshots.\)) Tj ET
@@ -296,7 +312,7 @@ BT /F3 7.5 Tf 0.145 0.388 0.922 rg 56.00 677.42 Td (https://nvd.nist.gov/vuln/de
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 651.17 Td (MEDIUM) Tj ET
 BT /F2 9.5 Tf 0.431 0.055 0.322 rg 96.41 651.17 Td (PIS-0001  ) Tj ET
 BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 635.15 Td (Telnet service enabled \(cleartext remote login\)) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 623.08 Td (CVSS 4.0: 6.0 | EPSS: - | PPR: 5.6) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 623.08 Td (CVSS 4.0: 6.0 | EPSS: - | PPR: 5.6 | Confidence: Confirmed) Tj ET
 BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 612.65 Td (CVSS:4.0/AV:A/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:N/SC:N/SI:N/SA:N) Tj ET
 BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 600.95 Td (Affected \(1\): 192.168.1.52:23) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 588.80 Td (The device accepts Telnet connections. Telnet sends user names, passwords and everything typed without encryption, so) Tj ET
@@ -310,7 +326,7 @@ BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 526.57 Td (Evidence: Port 23 accepts Te
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 500.02 Td (MEDIUM) Tj ET
 BT /F2 9.5 Tf 0.431 0.055 0.322 rg 96.41 500.02 Td (PIS-0009  ) Tj ET
 BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 484.00 Td (Login page served over unencrypted HTTP) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 471.92 Td (CVSS 4.0: 5.9 | EPSS: - | PPR: 5.1) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 471.92 Td (CVSS 4.0: 5.9 | EPSS: - | PPR: 5.1 | Confidence: Confirmed) Tj ET
 BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 461.50 Td (CVSS:4.0/AV:A/AC:L/AT:P/PR:N/UI:P/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N) Tj ET
 BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 449.80 Td (Affected \(1\): 192.168.1.52:80) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 437.65 Td (This web page contains a password field but is served over plain HTTP. Passwords typed into it travel unencrypted and can) Tj ET
@@ -323,53 +339,29 @@ BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 387.57 Td (Evidence: http://192.168.1.5
 BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 361.02 Td (LOW) Tj ET
 BT /F2 9.5 Tf 0.431 0.055 0.322 rg 83.50 361.02 Td (PIS-0013  ) Tj ET
 BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 345.00 Td (Unencrypted FTP service) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 332.92 Td (CVSS 4.0: 2.1 | EPSS: - | PPR: 2.1) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 332.92 Td (CVSS 4.0: 2.1 | EPSS: - | PPR: 2.1 | Confidence: Confirmed) Tj ET
 BT /F3 7.5 Tf 0.373 0.400 0.451 rg 48.00 322.50 Td (CVSS:4.0/AV:A/AC:L/AT:P/PR:N/UI:P/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N) Tj ET
 BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 310.80 Td (Affected \(1\): 192.168.1.60:21) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 298.65 Td (FTP sends user names, passwords and files without encryption.) Tj ET
 BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 284.50 Td (Solution: Use SFTP \(over SSH\) or FTPS instead, or disable the FTP service.) Tj ET
 BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 272.87 Td (Evidence: 220 \(vsFTPd 3.0.3\)) Tj ET
 0.863 0.878 0.902 RG 0.6 w 48.00 264.32 m 547.00 264.32 l S
-BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 238.32 Td (Informational findings) Tj ET
+BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 238.32 Td (Needs manual check) Tj ET
 0.745 0.094 0.549 RG 0.6 w 48.00 232.32 m 547.00 232.32 l S
-0.431 0.055 0.322 rg 48.00 209.32 499.00 15.00 re f
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 52.00 213.32 Td (ID) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 112.00 213.32 Td (Finding) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 287.00 213.32 Td (Where) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 407.00 213.32 Td (Details) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 198.32 Td (PIS-0012) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 112.00 198.32 Td (Software version detected) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 287.00 198.32 Td (192.168.1.10:22, 192.168.1.10\205) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 407.00 198.32 Td (OpenSSH 8.9p1) Tj ET
-BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 166.32 Td (Hosts and services) Tj ET
-0.745 0.094 0.549 RG 0.6 w 48.00 160.32 m 547.00 160.32 l S
-0.431 0.055 0.322 rg 48.00 137.32 499.00 15.00 re f
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 52.00 141.32 Td (Host) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 142.00 141.32 Td (Port) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 182.00 141.32 Td (Service) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 302.00 141.32 Td (Software) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 126.32 Td (192.168.1.10) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 126.32 Td (22) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 126.32 Td (SSH) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 126.32 Td (OpenSSH 8.9p1) Tj ET
-0.965 0.969 0.976 rg 48.00 107.32 499.00 15.00 re f
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 111.32 Td (192.168.1.10) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 111.32 Td (80) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 111.32 Td (HTTP \(web\)) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 111.32 Td (Apache httpd 2.4.49) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 96.32 Td (192.168.1.10) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 96.32 Td (6379) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 96.32 Td (Redis) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 96.32 Td (Redis 6.0.16) Tj ET
-0.965 0.969 0.976 rg 48.00 77.32 499.00 15.00 re f
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 81.32 Td (192.168.1.52) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 81.32 Td (23) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 81.32 Td (Telnet) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 81.32 Td () Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 66.32 Td (192.168.1.52) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 66.32 Td (80) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 66.32 Td (HTTP \(web\)) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 66.32 Td () Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 218.87 Td (The scanner could see these programs but not their exact version, so known vulnerabilities could be neither confirmed nor) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 206.72 Td (ruled out. They are not counted as vulnerabilities and may be false positives: check the installed version as described for) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 194.57 Td (each one.) Tj ET
+0.486 0.227 0.929 rg 48.00 170.87 39.59 12.00 re f
+BT /F2 7.5 Tf 1.000 1.000 1.000 rg 53.00 173.87 Td (REVIEW) Tj ET
+BT /F2 9.5 Tf 0.431 0.055 0.322 rg 95.59 173.87 Td (REVIEW-samba  ) Tj ET
+BT /F2 10.5 Tf 0.118 0.129 0.161 rg 48.00 157.85 Td (Samba smbd 4: exact version unknown \227 47 CVEs could apply \(2 known exploited\)) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 145.77 Td (Confidence: Unverified \227 not a confirmed vulnerability, needs a manual check) Tj ET
+BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 133.77 Td (Affected \(1\): 192.168.1.10:445 - Samba smbd 4) Tj ET
+BT /F2 9.0 Tf 0.082 0.502 0.239 rg 48.00 121.62 Td (Reviewed: Yes) Tj ET
+BT /F2 9.0 Tf 0.082 0.502 0.239 rg 56.00 109.47 Td (Comment \(192.168.1.10:445\): Checked on the server: smbd --version = 4.19.5 \(patched\). False positive.) Tj ET
+BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 97.32 Td (The scanner can see that this is Samba smbd but not its exact version \(Samba smbd 4\). Known vulnerabilities depend on the) Tj ET
+BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 85.17 Td (exact version, so from the network they can be neither confirmed nor ruled out. \(Demo data for screenshots.\)) Tj ET
+BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 71.02 Td (Solution: Check the installed version: On the server run `smbd --version` \(or `apt policy samba`\). Compare it with the "fixed) Tj ET
 0.863 0.878 0.902 RG 0.6 w 48.00 52.00 m 547.00 52.00 l S
 BT /F1 8 Tf 0.373 0.400 0.451 rg 48.00 40.00 Td (Proton IP Scanner  |  Vulnerability Assessment Report) Tj ET
 BT /F1 8 Tf 0.373 0.400 0.451 rg 506.08 40.00 Td (Page 3 of 4) Tj ET
@@ -380,40 +372,93 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 14 0 R >>
 endobj
 14 0 obj
-<< /Length 3582 >>
+<< /Length 8140 >>
 stream
 0.745 0.094 0.549 rg 0.00 836.00 595.00 6.00 re f
-0.431 0.055 0.322 rg 48.00 775.00 499.00 15.00 re f
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 52.00 779.00 Td (Host) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 142.00 779.00 Td (Port) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 182.00 779.00 Td (Service) Tj ET
-BT /F2 8.0 Tf 1.000 1.000 1.000 rg 302.00 779.00 Td (Software) Tj ET
-0.965 0.969 0.976 rg 48.00 760.00 499.00 15.00 re f
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 764.00 Td (192.168.1.60) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 764.00 Td (21) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 764.00 Td (FTP) Tj ET
-BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 764.00 Td (vsftpd 3.0.3) Tj ET
-BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 732.00 Td (How the scores work) Tj ET
-0.745 0.094 0.549 RG 0.6 w 48.00 726.00 m 547.00 726.00 l S
-BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 712.55 Td (CVSS v4.0) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 700.40 Td (Common Vulnerability Scoring System from FIRST: how severe a vulnerability is \(0-10\). NVD's v4.0 score is used when) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 688.25 Td (published; otherwise v3.1, v3.0 or v2.0, as shown next to each score. Proton's own configuration checks \(PIS-xxxx\) are) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 676.10 Td (scored with CVSS v4.0.) Tj ET
-BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 659.95 Td (EPSS) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 647.80 Td (Exploit Prediction Scoring System from FIRST: the probability that the vulnerability will be exploited in the wild in the next 30) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 635.65 Td (days, with its percentile among all CVEs. Updated daily.) Tj ET
-BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 619.50 Td (KEV) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 607.35 Td (Listed in CISA's Known Exploited Vulnerabilities catalog: attackers are known to use it. Fix these first.) Tj ET
-BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 591.20 Td (PPR \(VPR-style\)) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 579.05 Td (Proton Priority Rating, 0-10. Tenable's VPR is proprietary and cannot be reproduced; PPR follows the same idea with public) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 566.90 Td (data: 60% CVSS impact + 40% threat, where threat is 10 for KEV entries, otherwise 10 x sqrt\(EPSS\) \(2.0 when no EPSS) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 554.75 Td (exists yet\). The Top 10 is ordered by PPR.) Tj ET
-BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 538.60 Td (Version-based matching) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 526.45 Td (CVEs are matched from the software version each service announces, like remote version checks in other scanners. Linux) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 514.30 Td (distributions back-port fixes without changing version numbers; such findings say so and should be confirmed with the) Tj ET
-BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 502.15 Td (installed package version.) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 480.52 Td (This report was produced by an automated scan. It can miss vulnerabilities \(closed or filtered ports, software that hides its version\)) Tj ET
-BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 469.05 Td (and can include false positives. Only scan networks you own or have permission to assess.) Tj ET
+BT /F1 9.0 Tf 0.118 0.129 0.161 rg 48.00 784.55 Td (in" versions listed in the evidence.) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 772.92 Td (Evidence: Seen on port 445: "Samba smbd 4" \227 only the version family \(4.x\) is visible from the network.) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 761.45 Td () Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 749.98 Td (CVEs that affect some 4.x version, worst first:) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 738.50 Td (\225 CVE-2017-7494 \267 CVSS 9.8 \267 KEV \267 fixed in 4.6.4) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 727.03 Td (\225 CVE-2020-1472 \267 CVSS 5.5 \267 KEV \267 fixed in 4.12.4) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 715.55 Td (\225 CVE-2023-3961 \267 CVSS 9.8 \267 fixed in 4.19.1) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 704.08 Td (\225 CVE-2021-44142 \267 CVSS 8.8 \267 fixed in 4.15.5) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 692.60 Td (\225 CVE-2023-34966 \267 CVSS 7.5 \267 fixed in 4.18.5) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 681.13 Td (\205 and 42 more.) Tj ET
+BT /F3 7.5 Tf 0.145 0.388 0.922 rg 56.00 670.70 Td (https://nvd.nist.gov/vuln/detail/CVE-2017-7494) Tj ET
+0.863 0.878 0.902 RG 0.6 w 48.00 662.45 m 547.00 662.45 l S
+BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 636.45 Td (Informational findings) Tj ET
+0.745 0.094 0.549 RG 0.6 w 48.00 630.45 m 547.00 630.45 l S
+0.431 0.055 0.322 rg 48.00 607.45 499.00 15.00 re f
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 52.00 611.45 Td (ID) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 112.00 611.45 Td (Finding) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 287.00 611.45 Td (Where) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 407.00 611.45 Td (Details) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 596.45 Td (PIS-0012) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 112.00 596.45 Td (Software version detected) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 287.00 596.45 Td (192.168.1.10:22, 192.168.1.10\205) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 407.00 596.45 Td (OpenSSH 8.9p1) Tj ET
+BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 564.45 Td (Hosts and services) Tj ET
+0.745 0.094 0.549 RG 0.6 w 48.00 558.45 m 547.00 558.45 l S
+0.431 0.055 0.322 rg 48.00 535.45 499.00 15.00 re f
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 52.00 539.45 Td (Host) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 142.00 539.45 Td (Port) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 182.00 539.45 Td (Service) Tj ET
+BT /F2 8.0 Tf 1.000 1.000 1.000 rg 302.00 539.45 Td (Software) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 524.45 Td (192.168.1.10) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 524.45 Td (22) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 524.45 Td (SSH) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 524.45 Td (OpenSSH 8.9p1) Tj ET
+0.965 0.969 0.976 rg 48.00 505.45 499.00 15.00 re f
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 509.45 Td (192.168.1.10) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 509.45 Td (80) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 509.45 Td (HTTP \(web\)) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 509.45 Td (Apache httpd 2.4.49) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 494.45 Td (192.168.1.10) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 494.45 Td (6379) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 494.45 Td (Redis) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 494.45 Td (Redis 6.0.16) Tj ET
+0.965 0.969 0.976 rg 48.00 475.45 499.00 15.00 re f
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 479.45 Td (192.168.1.52) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 479.45 Td (23) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 479.45 Td (Telnet) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 479.45 Td () Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 464.45 Td (192.168.1.52) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 464.45 Td (80) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 464.45 Td (HTTP \(web\)) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 464.45 Td () Tj ET
+0.965 0.969 0.976 rg 48.00 445.45 499.00 15.00 re f
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 52.00 449.45 Td (192.168.1.60) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 142.00 449.45 Td (21) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 182.00 449.45 Td (FTP) Tj ET
+BT /F1 8.0 Tf 0.118 0.129 0.161 rg 302.00 449.45 Td (vsftpd 3.0.3) Tj ET
+BT /F2 14.0 Tf 0.431 0.055 0.322 rg 48.00 417.45 Td (How the scores work) Tj ET
+0.745 0.094 0.549 RG 0.6 w 48.00 411.45 m 547.00 411.45 l S
+BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 398.00 Td (Confidence) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 385.85 Td (How each finding was established. Confirmed: seen directly \(a configuration check, or an Nmap script that tested for it\).) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 373.70 Td (Version match: the service announced an exact version that NVD lists as vulnerable. May be backported: a version match on) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 361.55 Td (a Linux distribution build, which may already contain the fix. Unverified: only an approximate version is visible \(e.g. Samba) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 349.40 Td ("4"\), so known CVEs can be neither confirmed nor ruled out; such software is listed under "Needs manual check" \(severity) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 337.25 Td (Review\) and is not counted as a vulnerability.) Tj ET
+BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 321.10 Td (CVSS v4.0) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 308.95 Td (Common Vulnerability Scoring System from FIRST: how severe a vulnerability is \(0-10\). NVD's v4.0 score is used when) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 296.80 Td (published; otherwise v3.1, v3.0 or v2.0, as shown next to each score. Proton's own configuration checks \(PIS-xxxx\) are) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 284.65 Td (scored with CVSS v4.0.) Tj ET
+BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 268.50 Td (EPSS) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 256.35 Td (Exploit Prediction Scoring System from FIRST: the probability that the vulnerability will be exploited in the wild in the next 30) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 244.20 Td (days, with its percentile among all CVEs. Updated daily.) Tj ET
+BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 228.05 Td (KEV) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 215.90 Td (Listed in CISA's Known Exploited Vulnerabilities catalog: attackers are known to use it. Fix these first.) Tj ET
+BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 199.75 Td (PPR \(VPR-style\)) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 187.60 Td (Proton Priority Rating, 0-10. Tenable's VPR is proprietary and cannot be reproduced; PPR follows the same idea with public) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 175.45 Td (data: 60% CVSS impact + 40% threat, where threat is 10 for KEV entries, otherwise 10 x sqrt\(EPSS\) \(2.0 when no EPSS) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 163.30 Td (exists yet\). The Top 10 is ordered by PPR.) Tj ET
+BT /F2 9.0 Tf 0.118 0.129 0.161 rg 48.00 147.15 Td (Version-based matching) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 135.00 Td (CVEs are matched from the software version each service announces, like remote version checks in other scanners. Linux) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 122.85 Td (distributions back-port fixes without changing version numbers; such findings say so and should be confirmed with the) Tj ET
+BT /F1 9.0 Tf 0.373 0.400 0.451 rg 48.00 110.70 Td (installed package version.) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 89.08 Td (This report was produced by an automated scan. It can miss vulnerabilities \(closed or filtered ports, software that hides its version\)) Tj ET
+BT /F1 8.5 Tf 0.373 0.400 0.451 rg 48.00 77.60 Td (and can include false positives. Only scan networks you own or have permission to assess.) Tj ET
 0.863 0.878 0.902 RG 0.6 w 48.00 52.00 m 547.00 52.00 l S
 BT /F1 8 Tf 0.373 0.400 0.451 rg 48.00 40.00 Td (Proton IP Scanner  |  Vulnerability Assessment Report) Tj ET
 BT /F1 8 Tf 0.373 0.400 0.451 rg 506.08 40.00 Td (Page 4 of 4) Tj ET
@@ -431,14 +476,14 @@ xref
 0000000435 00000 n 
 0000000533 00000 n 
 0000000679 00000 n 
-0000012873 00000 n 
-0000013020 00000 n 
-0000019789 00000 n 
-0000019937 00000 n 
-0000027969 00000 n 
-0000028117 00000 n 
+0000013911 00000 n 
+0000014058 00000 n 
+0000020967 00000 n 
+0000021115 00000 n 
+0000028480 00000 n 
+0000028628 00000 n 
 trailer
 << /Size 15 /Root 1 0 R /Info 6 0 R >>
 startxref
-31752
+36821
 %%EOF
