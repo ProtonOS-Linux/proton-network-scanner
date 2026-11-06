@@ -12,7 +12,7 @@
 use std::fmt::Write as _;
 use std::fs::OpenOptions;
 use std::io::Write as _;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::scanner::Host;
@@ -54,6 +54,103 @@ pub fn save_bytes(prefix: &str, ext: &str, bytes: &[u8]) -> std::io::Result<Path
     };
     file.write_all(bytes)?;
     Ok(path)
+}
+
+/// Open the system file manager at `path`: a folder is opened, a file is
+/// shown selected in its folder where the file manager supports it.
+///
+/// * Linux: asks the desktop's file manager over D-Bus
+///   (`org.freedesktop.FileManager1.ShowItems`, supported by Dolphin and
+///   Nautilus) to show the file selected; if that is not available,
+///   `xdg-open` opens the folder.
+/// * Windows: `explorer.exe /select,"file"` (or the folder).
+///
+/// Programs are started directly with an argument list (no shell); the path
+/// is one the app created itself. Runs in the background, so a slow file
+/// manager never freezes the window; the child processes are waited for, so
+/// none is left behind.
+pub fn show_in_folder(path: &Path) {
+    let path = path.to_path_buf();
+    let _ = std::thread::Builder::new().name("show-in-folder".into()).stack_size(128 * 1024).spawn(move || {
+        reveal(&path);
+    });
+}
+
+/// Linux: file manager over D-Bus (file selected), else `xdg-open` on the folder.
+#[cfg(target_os = "linux")]
+fn reveal(path: &Path) {
+    use std::process::{Command, Stdio};
+    let quiet = |c: &mut Command| {
+        c.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
+    };
+    if path.is_file() {
+        let mut c = Command::new("dbus-send");
+        c.args([
+            "--session",
+            "--print-reply",
+            "--reply-timeout=3000",
+            "--dest=org.freedesktop.FileManager1",
+            "--type=method_call",
+            "/org/freedesktop/FileManager1",
+            "org.freedesktop.FileManager1.ShowItems",
+        ])
+        .arg(format!("array:string:{}", file_uri(path)))
+        .arg("string:");
+        quiet(&mut c);
+        if c.status().is_ok_and(|s| s.success()) {
+            return;
+        }
+    }
+    let dir = if path.is_dir() { path } else { path.parent().unwrap_or(path) };
+    let mut c = Command::new("xdg-open");
+    c.arg(dir);
+    quiet(&mut c);
+    let _ = c.status();
+}
+
+/// Windows: Explorer with the file selected (or the folder opened).
+#[cfg(windows)]
+fn reveal(path: &Path) {
+    use std::os::windows::process::CommandExt;
+    let mut c = std::process::Command::new("explorer.exe");
+    if path.is_file() {
+        // Explorer needs exactly `/select,"C:\path\file"` (one argument with
+        // the quotes inside), so it is passed raw. Windows paths cannot
+        // contain `"`, so the quoting cannot be broken.
+        c.raw_arg(format!("/select,\"{}\"", path.display()));
+    } else {
+        c.arg(path);
+    }
+    let _ = c.status();
+}
+
+/// Other systems (macOS): `open` on the folder.
+#[cfg(not(any(target_os = "linux", windows)))]
+fn reveal(path: &Path) {
+    let dir = if path.is_dir() { path } else { path.parent().unwrap_or(path) };
+    let _ = std::process::Command::new("open").arg(dir).status();
+}
+
+/// `file://` URI for a path: every byte except unreserved characters and `/`
+/// is percent-encoded (so commas and spaces cannot split the D-Bus argument).
+#[cfg(any(target_os = "linux", test))]
+fn file_uri(path: &Path) -> String {
+    #[cfg(unix)]
+    let bytes = {
+        use std::os::unix::ffi::OsStrExt;
+        path.as_os_str().as_bytes().to_vec()
+    };
+    #[cfg(not(unix))]
+    let bytes = path.to_string_lossy().as_bytes().to_vec();
+    let mut out = String::from("file://");
+    for b in bytes {
+        if b.is_ascii_alphanumeric() || b"-._~/".contains(&b) {
+            out.push(b as char);
+        } else {
+            out.push_str(&format!("%{b:02X}"));
+        }
+    }
+    out
 }
 
 /// Current time as "2026-11-02 21:40 UTC" (for report headers).
@@ -181,6 +278,11 @@ fn civil_from_days(z: i64) -> (i64, u32, u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn file_uris_are_encoded() {
+        assert_eq!(file_uri(Path::new("/home/a b/Report, v1.pdf")), "file:///home/a%20b/Report%2C%20v1.pdf");
+    }
     use std::time::Duration;
 
     #[test]

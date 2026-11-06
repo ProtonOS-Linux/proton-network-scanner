@@ -21,6 +21,9 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
     let wrap = Format::new().set_text_wrap().set_align(FormatAlign::Top);
     let title = Format::new().set_bold().set_font_size(16);
     let bold = Format::new().set_bold();
+    // The user's review marks and comments: bold green, so they stand out.
+    let green = Format::new().set_bold().set_font_color(Color::RGB(0x15803D)).set_align(FormatAlign::Top);
+    let green_wrap = green.clone().set_text_wrap();
     let num1 = Format::new().set_num_format("0.0").set_align(FormatAlign::Top);
     let pct = Format::new().set_num_format("0.00%").set_align(FormatAlign::Top);
     let sev_fmt = |s: Severity| {
@@ -47,6 +50,10 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
         ("Scan speed", d.speed.clone()),
         ("Duration", format!("{:.0} s", d.duration_secs)),
         ("Vulnerability data", d.cve_data.clone()),
+        ("Reviewed", {
+            let (done, all) = d.reviewed_count();
+            format!("{done} of {all} findings")
+        }),
     ];
     let mut row = 2;
     for (k, v) in info {
@@ -89,6 +96,7 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
             ("PPR", 7),
             ("KEV", 6),
             ("Confidence", 16),
+            ("Reviewed", 10),
         ],
     )?;
     for (i, t) in d.top10.iter().enumerate() {
@@ -104,6 +112,7 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
         ws.write_number_with_format(r, 8, r1(f.ppr), &num1)?;
         ws.write_string(r, 9, if f.kev { "Yes" } else { "" })?;
         ws.write_string(r, 10, f.confidence.label())?;
+        ws.write_string_with_format(r, 11, d.review_status(&f.id), &green)?;
     }
     ws.set_freeze_panes(1, 0)?;
 
@@ -133,6 +142,8 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
             ("Evidence", 50),
             ("References", 50),
             ("Confidence", 16),
+            ("Reviewed", 10),
+            ("Comment", 50),
         ],
     )?;
     let mut sorted: Vec<_> = d.findings.iter().collect();
@@ -159,9 +170,11 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
         ws.write_string_with_format(r, 16, &f.evidence, &wrap)?;
         ws.write_string_with_format(r, 17, f.references.join("\n"), &wrap)?;
         ws.write_string(r, 18, f.confidence.label())?;
+        ws.write_string_with_format(r, 19, if f.reviewed { "Yes" } else { "" }, &green)?;
+        ws.write_string_with_format(r, 20, crate::vuln::clean_comment(&f.comment), &green_wrap)?;
     }
     if !sorted.is_empty() {
-        ws.autofilter(0, 0, sorted.len() as u32, 18)?;
+        ws.autofilter(0, 0, sorted.len() as u32, 20)?;
     }
     ws.set_freeze_panes(1, 0)?;
 
@@ -182,6 +195,8 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
             ("PPR", 7),
             ("KEV", 6),
             ("Confidence", 16),
+            ("Reviewed", 10),
+            ("Comments", 50),
         ],
     )?;
     let groups = d.groups();
@@ -198,9 +213,16 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
         ws.write_number_with_format(r, 7, r1(f.ppr), &num1)?;
         ws.write_string(r, 8, if f.kev { "Yes" } else { "" })?;
         ws.write_string(r, 9, f.confidence.label())?;
+        ws.write_string_with_format(r, 10, d.review_status(&f.id), &green)?;
+        ws.write_string_with_format(
+            r,
+            11,
+            d.comments(&f.id).iter().map(|(loc, t)| format!("{loc}: {t}")).collect::<Vec<_>>().join("\n"),
+            &green_wrap,
+        )?;
     }
     if !groups.is_empty() {
-        ws.autofilter(0, 0, groups.len() as u32, 9)?;
+        ws.autofilter(0, 0, groups.len() as u32, 11)?;
     }
     ws.set_freeze_panes(1, 0)?;
 

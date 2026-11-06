@@ -270,6 +270,8 @@ fn vuln_finding(ip: Ipv4Addr, port: u16, service: &str, s: &Script, v: &crate::n
         references,
         published: v.disclosure.clone(),
         confidence: super::Confidence::Confirmed,
+        reviewed: false,
+        comment: String::new(),
     }
 }
 

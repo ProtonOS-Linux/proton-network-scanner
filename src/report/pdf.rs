@@ -40,6 +40,8 @@ const MUTED: Rgb = (95, 102, 115);
 const RULE: Rgb = (220, 224, 230);
 /// Background of every other table row.
 const ZEBRA: Rgb = (246, 247, 249);
+/// Green for the user's review marks and comments (readable on white).
+const REVIEW_GREEN: Rgb = (21, 128, 61);
 
 /// An RGB colour, 0–255 per channel.
 type Rgb = (u8, u8, u8);
@@ -422,6 +424,10 @@ pub fn build(d: &ReportData<'_>) -> Vec<u8> {
         ("Scan speed", d.speed.clone()),
         ("Duration", format!("{:.0} seconds", d.duration_secs)),
         ("Vulnerability data", d.cve_data.clone()),
+        ("Reviewed", {
+            let (done, all) = d.reviewed_count();
+            format!("{done} of {all} findings marked as reviewed")
+        }),
     ];
     for (k, v) in scope {
         doc.y -= 15.0;
@@ -490,12 +496,13 @@ pub fn build(d: &ReportData<'_>) -> Vec<u8> {
             ("#", 16.0),
             ("Severity", 58.0),
             ("ID", 78.0),
-            ("Vulnerability", 194.0),
+            ("Vulnerability", 162.0),
             ("Hosts", 30.0),
             ("CVSS", 34.0),
             ("EPSS", 34.0),
             ("PPR", 28.0),
             ("KEV", 27.0),
+            ("Reviewed", 32.0),
         ];
         let rows: Vec<Vec<String>> = d
             .top10
@@ -513,6 +520,11 @@ pub fn build(d: &ReportData<'_>) -> Vec<u8> {
                     f.epss.map(|e| format!("{:.1}%", e.probability * 100.0)).unwrap_or_else(|| "-".into()),
                     format!("{:.1}", f.ppr),
                     if f.kev { "Yes".into() } else { String::new() },
+                    match d.review_status(&f.id).as_str() {
+                        "" => String::new(),
+                        "Yes" => "Yes".into(),
+                        _ => "Part".into(),
+                    },
                 ]
             })
             .collect();
@@ -591,6 +603,24 @@ pub fn build(d: &ReportData<'_>) -> Vec<u8> {
                 f.product.as_ref().map(|p| format!("   -   {p}")).unwrap_or_default()
             );
             doc.para(MARGIN, CONTENT_W, 9.0, Font::Bold, TEXT, &affected);
+            // The user's review mark and comments (from the details panel).
+            let status = d.review_status(&f.id);
+            let comments = d.comments(&f.id);
+            if !status.is_empty() || !comments.is_empty() {
+                let status = if status.is_empty() { "No".to_string() } else { status };
+                doc.para(MARGIN, CONTENT_W, 9.0, Font::Bold, REVIEW_GREEN, &format!("Reviewed: {status}"));
+                // The user's comments stand out: bold green, like the review mark.
+                for (loc, text) in &comments {
+                    doc.para(
+                        MARGIN + 8.0,
+                        CONTENT_W - 8.0,
+                        9.0,
+                        Font::Bold,
+                        REVIEW_GREEN,
+                        &format!("Comment ({loc}): {text}"),
+                    );
+                }
+            }
             doc.para(MARGIN, CONTENT_W, 9.0, Font::Regular, TEXT, &f.description);
             doc.y -= 2.0;
             doc.para(MARGIN, CONTENT_W, 9.0, Font::Regular, TEXT, &format!("Solution: {}", f.solution));

@@ -112,12 +112,12 @@ impl DbInfo {
 }
 
 /// The app's data folder (holds the installed database).
-fn data_dir() -> Option<PathBuf> {
+pub fn data_dir() -> Option<PathBuf> {
     dirs::data_local_dir().map(|d| d.join("proton-ip-scanner"))
 }
 
 /// Path of the installed database file.
-fn installed_path() -> Option<PathBuf> {
+pub fn installed_path() -> Option<PathBuf> {
     data_dir().map(|d| d.join("vulndb.json.gz"))
 }
 

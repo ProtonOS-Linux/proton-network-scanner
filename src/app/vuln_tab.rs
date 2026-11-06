@@ -344,7 +344,11 @@ impl VulnTab {
             export::save_bytes("proton-vulnerability-report", "pdf", &b).map_err(|e| e.to_string())
         };
         self.toast = Some(match saved {
-            Ok(p) => (format!("Saved {}", p.display()), false),
+            Ok(p) => {
+                // Open the folder with the new report selected.
+                export::show_in_folder(&p);
+                (format!("Saved {}", p.display()), false)
+            }
             Err(e) => (format!("Could not save the report: {e}"), true),
         });
     }
@@ -572,6 +576,21 @@ impl VulnTab {
                     }
                 }
             });
+            if ui
+                .button("📂 Show in folder")
+                .on_hover_text("Open the folder where the offline database is stored")
+                .clicked()
+            {
+                match offline::data_dir() {
+                    Some(dir) => {
+                        let _ = std::fs::create_dir_all(&dir);
+                        let file = offline::installed_path().filter(|p| p.is_file());
+                        export::show_in_folder(file.as_deref().unwrap_or(&dir));
+                    }
+                    None => self.toast = Some(("This system has no data folder for the database.".into(), true)),
+                }
+                ui.close();
+            }
             if ui.add_enabled(self.db_info.is_some(), egui::Button::new("🗑 Delete offline database")).clicked() {
                 offline::uninstall();
                 self.db_info = None;
@@ -875,14 +894,27 @@ impl VulnTab {
             .column(Column::exact(78.0))
             .column(Column::initial(120.0).at_least(100.0))
             .column(Column::remainder().at_least(160.0).clip(true))
+            .column(Column::exact(84.0))
             .column(Column::exact(48.0))
             .column(Column::exact(58.0))
             .column(Column::exact(62.0))
             .column(Column::exact(44.0))
             .column(Column::exact(40.0))
-            .column(Column::exact(112.0))
+            .column(Column::exact(136.0))
             .header(26.0, |mut h| {
-                for t in ["#", "Severity", "ID", "Vulnerability", "Hosts", "CVSS", "EPSS", "PPR", "KEV", "Confidence"] {
+                for t in [
+                    "#",
+                    "Severity",
+                    "ID",
+                    "Vulnerability",
+                    "Review",
+                    "Hosts",
+                    "CVSS",
+                    "EPSS",
+                    "PPR",
+                    "KEV",
+                    "Confidence",
+                ] {
                     h.col(|ui| {
                         ui.strong(t).on_hover_text(column_help(t));
                     });
@@ -905,6 +937,11 @@ impl VulnTab {
                     });
                     row.col(|ui| {
                         ui.label(&f.title);
+                    });
+                    row.col(|ui| {
+                        let same = self.findings.iter().filter(|x| x.id == f.id);
+                        let (done, all) = same.fold((0, 0), |(d, a), x| (d + usize::from(x.reviewed), a + 1));
+                        review_mark(ui, done, all);
                     });
                     row.col(|ui| {
                         ui.label(t.hosts.to_string());
@@ -949,15 +986,18 @@ impl VulnTab {
             .column(Column::exact(78.0))
             .column(Column::initial(118.0).at_least(90.0))
             .column(Column::remainder().at_least(160.0).clip(true))
+            .column(Column::exact(84.0))
             .column(Column::initial(108.0).at_least(90.0))
             .column(Column::exact(48.0))
             .column(Column::exact(58.0))
             .column(Column::exact(62.0))
             .column(Column::exact(44.0))
             .column(Column::exact(40.0))
-            .column(Column::exact(112.0))
+            .column(Column::exact(136.0))
             .header(26.0, |mut h| {
-                for t in ["Severity", "ID", "Title", "Host", "Port", "CVSS", "EPSS", "PPR", "KEV", "Confidence"] {
+                for t in
+                    ["Severity", "ID", "Title", "Review", "Host", "Port", "CVSS", "EPSS", "PPR", "KEV", "Confidence"]
+                {
                     h.col(|ui| {
                         ui.strong(t).on_hover_text(column_help(t));
                     });
@@ -976,6 +1016,9 @@ impl VulnTab {
                     });
                     row.col(|ui| {
                         ui.label(&f.title);
+                    });
+                    row.col(|ui| {
+                        review_mark(ui, usize::from(f.reviewed), 1);
                     });
                     row.col(|ui| {
                         ui.monospace(f.ip.to_string());
@@ -1086,6 +1129,29 @@ impl VulnTab {
             ui.add_space(4.0);
             ui.add(egui::Label::new(RichText::new(&f.title).size(15.0).strong()).wrap());
             ui.add_space(8.0);
+
+            // Review mark and comment: kept with this finding (this host and
+            // port) until the next assessment, and printed in the reports.
+            if let Some(fm) = self.selected.and_then(|i| self.findings.get_mut(i)) {
+                egui::Frame::group(ui.style()).show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+                    ui.checkbox(&mut fm.reviewed, RichText::new("Reviewed").strong())
+                        .on_hover_text("Mark this finding as checked. Shown in the PDF and Excel reports.");
+                    ui.label(RichText::new("Comment (shown in the reports)").weak().small());
+                    let edit = ui.add(
+                        egui::TextEdit::multiline(&mut fm.comment)
+                            .desired_rows(3)
+                            .desired_width(f32::INFINITY)
+                            .char_limit(vuln::MAX_COMMENT)
+                            .hint_text("e.g. Server runs Samba 4.19.5 (checked 2026-11-06) — false positive"),
+                    );
+                    if edit.changed() {
+                        // Pasted text: drop control characters (keep line breaks and tabs).
+                        fm.comment.retain(|c| !c.is_control() || c == '\n' || c == '\t');
+                    }
+                });
+                ui.add_space(8.0);
+            }
 
             egui::Grid::new("finding").num_columns(2).spacing([12.0, 6.0]).striped(true).show(ui, |ui| {
                 ui.label(RichText::new("Confidence").weak());
@@ -1241,6 +1307,8 @@ impl VulnTab {
                 } else {
                     vuln::Confidence::VersionMatch
                 },
+                reviewed: false,
+                comment: String::new(),
             }
         };
         let v31 = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H";
@@ -1349,6 +1417,8 @@ impl VulnTab {
                 references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2017-7494".into()],
                 published: None,
                 confidence: vuln::Confidence::Unverified,
+                reviewed: true,
+                comment: "Checked on the server: smbd --version = 4.19.5 (patched). False positive.".into(),
             },
         ];
         self.hosts = 3;
@@ -1392,6 +1462,7 @@ fn column_help(col: &str) -> &'static str {
         "EPSS" => "Probability of exploitation in the next 30 days (FIRST EPSS)",
         "PPR" => "Proton Priority Rating 0-10 (VPR-style): severity combined with real-world threat",
         "KEV" => "Listed in CISA's Known Exploited Vulnerabilities catalog",
+        "Review" => "✔ Done when you ticked Reviewed in the details panel (◐ = some of its hosts)",
         "Confidence" => {
             "How the finding was established: Confirmed · Version match · May be backported (distribution build) · \
              Unverified (only an approximate version is visible — check manually)"

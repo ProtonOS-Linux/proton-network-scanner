@@ -108,6 +108,20 @@ pub fn confidence_label(ui: &mut egui::Ui, c: crate::vuln::Confidence) -> egui::
     ui.label(RichText::new(format!("{icon} {}", c.label())).color(color)).on_hover_text(c.help())
 }
 
+/// The "Review" column: green "✔ Done" when all `total` instances are
+/// reviewed, "◐ 1 of 3" when some are, empty when none.
+pub fn review_mark(ui: &mut egui::Ui, done: usize, total: usize) {
+    if done == 0 || total == 0 {
+        return;
+    }
+    let (text, tip) = if done >= total {
+        ("✔ Done".to_string(), "Reviewed".to_string())
+    } else {
+        (format!("◐ {done} of {total}"), format!("Reviewed on {done} of {total} hosts"))
+    };
+    ui.label(RichText::new(text).color(GREEN).strong()).on_hover_text(tip);
+}
+
 /// A small filled label like `CRITICAL`.
 pub fn severity_tag(ui: &mut egui::Ui, s: Severity) -> egui::Response {
     let text = s.label().to_uppercase();

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.0 — 2026-11-06
+
+### New
+- **Reviewed checkbox and comment** on every finding (details panel of the Vulnerability Scanner). Reviewed
+  findings show a green **✔ Done** in a new *Review* column next to the title (◐ "1 of 3" in the Top 10 when only
+  some hosts are reviewed). Both appear in the reports, in **bold green**: PDF (summary count, a *Reviewed* column
+  in the Top 10, "Reviewed" and "Comment (host:port)" under each finding) and Excel (*Reviewed* and *Comment*
+  columns, count on the Summary sheet). They are kept until the next
+  assessment, which starts fresh as before.
+- **The folder opens after a report is saved**, with the new file selected (KDE Dolphin, GNOME Files, Windows
+  Explorer); other file managers open the folder.
+- **Database → 📂 Show in folder** opens the folder where the offline CVE database is stored.
+
 ## 1.5.0 — 2026-11-04
 
 ### New

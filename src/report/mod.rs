@@ -56,6 +56,34 @@ impl ReportData<'_> {
         groups
     }
 
+    /// Review status of a vulnerability across its hosts:
+    /// "Yes" (all reviewed), "2 of 3" (some), or "" (none).
+    pub fn review_status(&self, id: &str) -> String {
+        let all: Vec<&Finding> = self.findings.iter().filter(|f| f.id == id).collect();
+        let done = all.iter().filter(|f| f.reviewed).count();
+        match done {
+            0 => String::new(),
+            n if n == all.len() => "Yes".into(),
+            n => format!("{n} of {}", all.len()),
+        }
+    }
+
+    /// The user's comments on a vulnerability, one per host:
+    /// `("10.0.0.5:445", "text")` (cleaned, see `vuln::clean_comment`).
+    pub fn comments(&self, id: &str) -> Vec<(String, String)> {
+        self.findings
+            .iter()
+            .map(|f| (f, crate::vuln::clean_comment(&f.comment)))
+            .filter(|(f, c)| f.id == id && !c.trim().is_empty())
+            .map(|(f, c)| (format!("{}:{}", f.ip, f.port), c.trim().to_string()))
+            .collect()
+    }
+
+    /// (findings marked reviewed, all findings) for the summary.
+    pub fn reviewed_count(&self) -> (usize, usize) {
+        (self.findings.iter().filter(|f| f.reviewed).count(), self.findings.len())
+    }
+
     /// Number of findings (host × vulnerability) per severity.
     pub fn counts(&self) -> [(Severity, usize); 6] {
         Severity::ALL.map(|s| (s, self.findings.iter().filter(|f| f.severity == s).count()))

@@ -67,6 +67,8 @@ Part of the [Proton OS](https://www.protonos.org) family.
 - **Confidence on every finding** (Confirmed · Version match · May be backported · Unverified), and a
   **Needs manual check** item (severity *Review*) when only an approximate version is visible — e.g. Samba "4" —
   listing the CVEs that could apply and how to check the installed version, instead of false positives.
+- **Reviewed checkbox and comment** on every finding, shown in the PDF and Excel reports. After saving a
+  report its folder opens with the file selected; *Database → Show in folder* opens the CVE database folder.
 - **Top 10 vulnerabilities** by priority, all findings (click a severity to filter), services list, and a
   details panel with description, solution, evidence and references.
 - **Slow probing** so scans are not blocked: *Normal*, *Polite* (fewer probes, random pauses) or

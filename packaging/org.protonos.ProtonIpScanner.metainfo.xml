@@ -92,6 +92,11 @@
     <binary>proton-ip-scanner</binary>
   </provides>
   <releases>
+    <release version="1.6.0" date="2026-11-06">
+      <description>
+        <p>Mark findings as reviewed and add comments, both shown in the PDF and Excel reports. The folder opens after a report is saved, and the offline database folder can be opened from the Database menu.</p>
+      </description>
+    </release>
     <release version="1.5.0" date="2026-11-04">
       <description>
         <p>Every finding shows how sure the scanner is (Confirmed, Version match, May be backported, Unverified). Software whose exact version cannot be seen gets one "needs manual check" item listing the CVEs that could apply, instead of a flood of false positives.</p>

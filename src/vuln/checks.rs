@@ -54,6 +54,8 @@ impl Check {
             references: Vec::new(),
             published: None,
             confidence: super::Confidence::Confirmed,
+            reviewed: false,
+            comment: String::new(),
         }
     }
 }

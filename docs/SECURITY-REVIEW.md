@@ -11,10 +11,10 @@ the 1.3 installers and the 1.4 optional Nmap engine (section 17).
 |---|---|
 | `cargo audit` (RustSec database, 1 403 advisories, 413 crates) | **0 vulnerabilities, 0 warnings** |
 | `cargo clippy --all-targets -D warnings` | **clean** |
-| Unit + integration tests | **89 passed** (2 ignored: need a real network / internet), incl. runs against real Nmap 7.94 |
+| Unit + integration tests | **95 passed** (2 ignored: need a real network / internet), incl. runs against real Nmap 7.94 |
 | Fuzz tests (random + mutated input) | 20 000 random inputs × 10 parsers (incl. SSDP, UPnP XML, mDNS records), 30 000 mutated mDNS/NetBIOS replies, 5 000 random JSON documents, 6 000 random/garbage offline-database files, 3 000 mutated Nmap XML outputs — **no panics** |
 | Runs as root / admin | **The app never does.** Only when you tick *Deep scan* (Nmap engine) is **one Nmap process** started through `pkexec` (Linux, password prompt) — nothing else, nothing in the background |
-| Shell / external commands | **No shell.** Only Nmap (optional, if installed and chosen) with a fixed argument list, and the desktop browser for URLs built from a parsed IP + port, or `http(s)://` links from NVD |
+| Shell / external commands | **No shell.** Only Nmap (optional, if installed and chosen) with a fixed argument list, the desktop browser for URLs built from a parsed IP + port or `http(s)://` links from NVD, and the file manager to show a saved report (section 18) |
 | `unsafe` code | Only 3 small Windows API calls (`IcmpSendEcho`, `SendARP`, `AttachConsole`), each with a `SAFETY` comment |
 
 ## Threat model
@@ -193,6 +193,19 @@ at its next progress line, ≤ 2 s). Tested: Stop returns in under 2 s.
 
 **Licensing**: Nmap is not bundled or downloaded (it has its own licence, and Npcap's terms differ); the .deb
 only *recommends* it and the app links to nmap.org.
+
+### 18. Review marks, comments and "show in folder" (new in 1.6)
+* **Comments are user text that goes into reports.** Control characters are removed (line breaks kept) and the
+  length is capped at 2 000 characters (`vuln::clean_comment`). In the PDF every string is escaped, so a comment
+  like `) Tj ET` cannot break out of a text object (tested); in Excel comments are written as text, so
+  `=HYPERLINK(…)` is never evaluated. Comments live in memory only and are cleared by the next assessment.
+* **Opening a folder starts a desktop program** — `dbus-send` (asks the file manager to show the file),
+  `xdg-open` (opens the folder) or `explorer.exe` — always directly with an argument list, never through a shell.
+  The only variable argument is a path the app created itself (the saved report or the app's own data folder);
+  for D-Bus it is percent-encoded as a `file://` URI, so spaces or commas cannot split it. On Windows the
+  `/select,"path"` argument is passed raw because Explorer requires that exact form; Windows paths cannot contain
+  `"`, so the quoting cannot be broken. These run on a background thread and are waited for (no leftover
+  processes); a missing program only means the folder does not open.
 
 ## Known limitations (accepted)
 

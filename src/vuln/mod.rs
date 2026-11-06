@@ -65,6 +65,25 @@ pub struct Finding {
     pub published: Option<String>,
     /// How sure the scanner is that this finding is real.
     pub confidence: Confidence,
+    /// Ticked by the user in the details panel once the finding was looked at.
+    pub reviewed: bool,
+    /// The user's note about this finding (see [`clean_comment`]).
+    pub comment: String,
+}
+
+/// Longest comment kept per finding.
+pub const MAX_COMMENT: usize = 2_000;
+
+/// Make user-typed comment text safe to keep and print: control characters
+/// removed (line breaks and tabs kept), length capped at [`MAX_COMMENT`].
+/// The PDF and Excel writers escape it again when writing.
+pub fn clean_comment(s: &str) -> String {
+    s.chars()
+        .filter(|c| !c.is_control() || *c == '\n' || *c == '\t')
+        .take(MAX_COMMENT)
+        .collect::<String>()
+        .trim_end()
+        .to_string()
 }
 
 /// How a finding was established — shown next to every finding so false
@@ -949,6 +968,8 @@ fn os_finding(ip: Ipv4Addr, port: u16, service: &str, os: &str) -> Finding {
         references: vec![],
         published: None,
         confidence: Confidence::Confirmed,
+        reviewed: false,
+        comment: String::new(),
     }
 }
 
@@ -1016,6 +1037,8 @@ fn cve_finding(svc: &Service, product: &detect::Product, r: &nvd::CveRecord) -> 
         },
         published: r.published.clone(),
         confidence: if product.backported { Confidence::Backported } else { Confidence::VersionMatch },
+        reviewed: false,
+        comment: String::new(),
     }
 }
 
@@ -1117,6 +1140,8 @@ fn review_finding(a: &Approx, possible: &[&nvd::CveRecord], names: &[(String, St
         references: list.iter().take(10).map(|r| format!("https://nvd.nist.gov/vuln/detail/{}", r.id)).collect(),
         published: None,
         confidence: Confidence::Unverified,
+        reviewed: false,
+        comment: String::new(),
     }
 }
 
@@ -1188,7 +1213,53 @@ mod tests {
             references: vec![],
             published: None,
             confidence: Confidence::VersionMatch,
+            reviewed: false,
+            comment: String::new(),
         }
+    }
+
+    #[test]
+    fn comments_are_cleaned() {
+        assert_eq!(clean_comment("ok\x1b[31m red\r\nline 2\t \n"), "ok[31m red\nline 2");
+        assert_eq!(clean_comment(&"x".repeat(5_000)).len(), MAX_COMMENT);
+    }
+
+    /// Review marks and comments reach both reports; hostile comment text
+    /// stays text.
+    #[test]
+    fn reviews_in_reports() {
+        let mut a = f("CVE-2024-0001", 1, 5.0, Severity::Medium);
+        a.reviewed = true;
+        a.comment = "Patched (4.19.5) ) Tj ET =HYPERLINK(\"x\")".into();
+        let b = f("CVE-2024-0001", 2, 5.0, Severity::Medium);
+        let c = f("CVE-2024-0002", 1, 9.0, Severity::Critical);
+        let findings = vec![a, b, c];
+        let top = top10(&findings);
+        let d = crate::report::ReportData {
+            generated: "now".into(),
+            targets: "10.0.0.0/24".into(),
+            speed: "Normal".into(),
+            duration_secs: 1.0,
+            hosts: 2,
+            cve_data: "test".into(),
+            services: &[],
+            findings: &findings,
+            top10: &top,
+            notes: &[],
+        };
+        assert_eq!(d.review_status("CVE-2024-0001"), "1 of 2");
+        assert_eq!(d.review_status("CVE-2024-0002"), "");
+        assert_eq!(
+            d.comments("CVE-2024-0001"),
+            [("10.0.0.1:22".to_string(), "Patched (4.19.5) ) Tj ET =HYPERLINK(\"x\")".to_string())]
+        );
+        assert_eq!(d.reviewed_count(), (1, 3));
+        let pdf = crate::report::pdf::build(&d);
+        let text = String::from_utf8_lossy(&pdf);
+        assert!(text.contains("Reviewed: 1 of 2"));
+        // The parenthesis is escaped, so the comment cannot end the text object.
+        assert!(text.contains("Patched \\(4.19.5\\) \\) Tj ET"));
+        assert!(crate::report::xlsx::build(&d).is_ok());
     }
 
     #[test]
