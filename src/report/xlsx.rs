@@ -234,6 +234,7 @@ pub fn build(d: &ReportData<'_>) -> Result<Vec<u8>, XlsxError> {
     wb.save_to_buffer()
 }
 
+/// Write the bold header row and set column widths.
 fn header(ws: &mut Worksheet, fmt: &Format, cols: &[(&str, u16)]) -> Result<(), XlsxError> {
     for (i, (name, width)) in cols.iter().enumerate() {
         ws.write_string_with_format(0, i as u16, *name, fmt)?;
@@ -242,6 +243,7 @@ fn header(ws: &mut Worksheet, fmt: &Format, cols: &[(&str, u16)]) -> Result<(), 
     Ok(())
 }
 
+/// Write the CVSS score and version cells (empty when not scored).
 fn cvss_cells(ws: &mut Worksheet, r: u32, c: u16, f: &crate::vuln::Finding, num: &Format) -> Result<(), XlsxError> {
     if let Some(cv) = &f.cvss {
         ws.write_number_with_format(r, c, r1(cv.score), num)?;
@@ -250,6 +252,7 @@ fn cvss_cells(ws: &mut Worksheet, r: u32, c: u16, f: &crate::vuln::Finding, num:
     Ok(())
 }
 
+/// Write the EPSS probability cell as a percentage (empty when unknown).
 fn epss_cell(ws: &mut Worksheet, r: u32, c: u16, f: &crate::vuln::Finding, pct: &Format) -> Result<(), XlsxError> {
     if let Some(e) = f.epss {
         ws.write_number_with_format(r, c, r5(e.probability), pct)?;

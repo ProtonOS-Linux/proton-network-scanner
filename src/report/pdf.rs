@@ -17,23 +17,34 @@ use std::fmt::Write as _;
 use super::{METHOD_NOTES, ReportData};
 use crate::vuln::score::Severity;
 
+/// A4 page width in PDF points (1/72 inch).
 const PAGE_W: f32 = 595.0;
+/// A4 page height in PDF points.
 const PAGE_H: f32 = 842.0;
+/// Page margin on every side.
 const MARGIN: f32 = 48.0;
+/// Width available for text and tables.
 const CONTENT_W: f32 = PAGE_W - 2.0 * MARGIN;
 /// Lowest y for content (space for the footer below it).
 const BOTTOM: f32 = MARGIN + 18.0;
 
 /// Magenta (matches the app logo).
 const BRAND: Rgb = (190, 24, 140);
+/// Dark magenta for headings and the title bar.
 const BRAND_DARK: Rgb = (110, 14, 82);
+/// Body text colour.
 const TEXT: Rgb = (30, 33, 41);
+/// Secondary (grey) text colour.
 const MUTED: Rgb = (95, 102, 115);
+/// Colour of separator lines.
 const RULE: Rgb = (220, 224, 230);
+/// Background of every other table row.
 const ZEBRA: Rgb = (246, 247, 249);
 
+/// An RGB colour, 0–255 per channel.
 type Rgb = (u8, u8, u8);
 
+/// The three standard PDF fonts used (no font files are embedded).
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Font {
     Regular,
@@ -42,6 +53,7 @@ enum Font {
 }
 
 impl Font {
+    /// Resource name of the font inside the PDF.
     fn res(self) -> &'static str {
         match self {
             Font::Regular => "F1",
@@ -59,6 +71,7 @@ const HELV: [u16; 95] = [
     556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334,
     260, 334, 584,
 ];
+/// Character widths of Helvetica-Bold for ASCII 32–126, in 1/1000 em.
 const HELV_BOLD: [u16; 95] = [
     278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556,
     556, 556, 556, 333, 333, 584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833,
@@ -87,6 +100,7 @@ fn win_ansi(c: char) -> u8 {
     }
 }
 
+/// Width of one character in 1/1000 em (used to wrap and align text).
 fn char_width(c: char, font: Font) -> f32 {
     let b = win_ansi(c);
     match font {
@@ -99,6 +113,7 @@ fn char_width(c: char, font: Font) -> f32 {
     }
 }
 
+/// Width of a string in points at the given font size.
 fn text_width(s: &str, size: f32, font: Font) -> f32 {
     s.chars().map(|c| char_width(c, font)).sum::<f32>() * size / 1000.0
 }
@@ -171,6 +186,7 @@ fn pdf_str(s: &str) -> String {
     o
 }
 
+/// PDF colour operands "r g b" (0–1) for a colour.
 fn rgb(c: Rgb) -> String {
     format!("{:.3} {:.3} {:.3}", f32::from(c.0) / 255.0, f32::from(c.1) / 255.0, f32::from(c.2) / 255.0)
 }
@@ -183,10 +199,12 @@ struct Doc {
 }
 
 impl Doc {
+    /// An empty document with one page.
     fn new() -> Doc {
         Doc { pages: Vec::new(), cur: String::new(), y: PAGE_H - MARGIN }
     }
 
+    /// Finish the current page and start a new one.
     fn new_page(&mut self) {
         self.pages.push(std::mem::take(&mut self.cur));
         self.y = PAGE_H - MARGIN;
@@ -201,6 +219,7 @@ impl Doc {
         }
     }
 
+    /// Draw text at (x, y); the text is escaped so it cannot break the PDF.
     fn text(&mut self, x: f32, y: f32, size: f32, font: Font, color: Rgb, s: &str) {
         let _ = writeln!(
             self.cur,
@@ -211,10 +230,12 @@ impl Doc {
         );
     }
 
+    /// Draw a filled rectangle.
     fn rect(&mut self, x: f32, y: f32, w: f32, h: f32, color: Rgb) {
         let _ = writeln!(self.cur, "{} rg {x:.2} {y:.2} {w:.2} {h:.2} re f", rgb(color));
     }
 
+    /// Draw a thin horizontal line across the content width.
     fn hline(&mut self, y: f32, color: Rgb) {
         let _ = writeln!(self.cur, "{} RG 0.6 w {MARGIN:.2} {y:.2} m {:.2} {y:.2} l S", rgb(color), PAGE_W - MARGIN);
     }
@@ -229,6 +250,7 @@ impl Doc {
         }
     }
 
+    /// A section heading (starts a new page if there is too little room left).
     fn heading(&mut self, s: &str) {
         self.need(40.0);
         self.y -= 26.0;

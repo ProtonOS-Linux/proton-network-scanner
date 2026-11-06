@@ -82,8 +82,10 @@ pub enum Speed {
 }
 
 impl Speed {
+    /// Every speed, in the order shown in menus.
     pub const ALL: [Speed; 3] = [Speed::Normal, Speed::Polite, Speed::Slow];
 
+    /// Name shown in menus and reports.
     pub fn label(self) -> &'static str {
         match self {
             Speed::Normal => "Normal (fast)",
@@ -103,6 +105,7 @@ impl Speed {
 }
 
 impl Default for Settings {
+    /// Defaults: 64 threads, 800 ms ping timeout with 2 tries, all name lookups on.
     fn default() -> Self {
         Settings {
             threads: 64,
@@ -157,6 +160,7 @@ pub enum Method {
 }
 
 impl Method {
+    /// How the device was found, as shown in the table.
     pub fn label(self) -> &'static str {
         match self {
             Method::Ping => "Ping",
@@ -287,6 +291,7 @@ impl Job {
     pub fn cancel(&self) {
         self.cancel.store(true, Ordering::Relaxed);
     }
+    /// Has Stop been pressed?
     pub fn is_cancelled(&self) -> bool {
         self.cancel.load(Ordering::Relaxed)
     }
@@ -294,6 +299,7 @@ impl Job {
     pub fn done(&self) -> usize {
         self.done.load(Ordering::Relaxed)
     }
+    /// Time since the job started.
     pub fn elapsed(&self) -> Duration {
         self.finished_at.unwrap_or_else(Instant::now) - self.started
     }
@@ -388,6 +394,7 @@ pub(crate) fn seed() -> u64 {
 pub(crate) struct Rng(pub u64);
 
 impl Rng {
+    /// Next pseudo-random number (xorshift64).
     pub fn next(&mut self) -> u64 {
         let mut x = self.0.max(1);
         x ^= x << 13;
@@ -411,10 +418,12 @@ struct Shuffle {
 }
 
 impl Shuffle {
+    /// No shuffling: index i stays i.
     fn identity() -> Shuffle {
         Shuffle { a: 1, b: 0 }
     }
 
+    /// A random permutation of `0..n` from the seed.
     fn new(n: usize, seed: u64) -> Shuffle {
         let n = n.max(1) as u64;
         let mut rng = Rng(seed);
@@ -426,12 +435,14 @@ impl Shuffle {
         Shuffle { a, b: rng.next() % n }
     }
 
+    /// Position of item `i` (of `n`) in the shuffled order.
     fn map(&self, i: usize, n: usize) -> usize {
         let n = n.max(1) as u128;
         ((u128::from(self.a) * i as u128 + u128::from(self.b)) % n) as usize
     }
 }
 
+/// Greatest common divisor (Euclid).
 fn gcd(mut a: u64, mut b: u64) -> u64 {
     while b != 0 {
         (a, b) = (b, a % b);

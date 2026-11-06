@@ -28,8 +28,10 @@ struct Index {
     tables: [(usize, Vec<(u64, &'static str)>); 3],
 }
 
+/// The prefix → vendor index, built on first use.
 static INDEX: OnceLock<Index> = OnceLock::new();
 
+/// The index (built once from the embedded OUI list).
 fn index() -> &'static Index {
     INDEX.get_or_init(|| {
         let mut tables = [(9, Vec::new()), (7, Vec::new()), (6, Vec::with_capacity(41_000))];

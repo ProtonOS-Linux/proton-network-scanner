@@ -21,7 +21,9 @@ pub struct PingWindow {
     ctx: egui::Context,
 }
 
+/// Choices for how many pings to send (0 = until stopped).
 const COUNTS: [(u32, &str); 4] = [(10, "10 pings"), (50, "50 pings"), (100, "100 pings"), (0, "Continuous")];
+/// Choices for the time between pings, in milliseconds.
 const INTERVALS: [(u64, &str); 4] =
     [(200, "every 0.2 s"), (500, "every 0.5 s"), (1000, "every 1 s"), (2000, "every 2 s")];
 
@@ -42,6 +44,7 @@ impl PingWindow {
         w
     }
 
+    /// Start (or restart) the ping test with the chosen count and interval.
     fn start(&mut self) {
         let opts = PingOptions {
             count: COUNTS[self.count_idx].0,
@@ -52,6 +55,7 @@ impl PingWindow {
         self.test = Some(PingTest::start(self.ip, opts, &self.open_ports, move || ctx.request_repaint()));
     }
 
+    /// Is a ping test currently running?
     pub fn running(&self) -> bool {
         self.test.as_ref().is_some_and(|t| t.running)
     }
@@ -85,6 +89,7 @@ impl PingWindow {
         self.open
     }
 
+    /// Window contents: options, live statistics, the latency chart and a verdict.
     fn contents(&mut self, ui: &mut egui::Ui) {
         // ---- Controls ----
         ui.horizontal_wrapped(|ui| {

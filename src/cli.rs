@@ -14,6 +14,7 @@ use std::time::Instant;
 use crate::export;
 use crate::scanner::{self, Event, Host, Settings};
 
+/// Text printed by `--help`.
 const HELP: &str = "\
 Proton IP Scanner — find devices on your network.
 
@@ -77,6 +78,7 @@ pub fn run(args: &[String]) -> i32 {
     }
 }
 
+/// Parse the arguments and run the requested command; errors are returned as text.
 fn run_inner(args: &[String]) -> Result<(), String> {
     let mut settings = Settings::default();
     let mut range: Option<String> = None;
@@ -271,6 +273,7 @@ fn table(hosts: &[Host]) -> String {
     s
 }
 
+/// Shorten `s` to `n` characters, adding "…" when cut.
 fn truncate(s: &str, n: usize) -> String {
     if s.chars().count() <= n { s.to_string() } else { s.chars().take(n - 1).chain(['…']).collect() }
 }

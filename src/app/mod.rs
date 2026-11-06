@@ -40,12 +40,14 @@ const SCAN_REDRAW: Duration = Duration::from_millis(150);
 /// Max events handled per frame, so a burst can never freeze the window.
 const MAX_EVENTS_PER_FRAME: usize = 4_000;
 
+/// Which tab is shown: the Network Scanner or the Vulnerability Scanner.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Tab {
     Network,
     Vulnerability,
 }
 
+/// What the running background job is doing (decides how its results are applied).
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum JobKind {
     Discovery,
@@ -85,6 +87,8 @@ struct Toast {
     until: Instant,
 }
 
+/// The whole application state: settings, scan results, running jobs and open windows.
+/// One instance lives for the life of the window; `ui()` draws it every frame.
 pub struct App {
     tab: Tab,
     vuln: VulnTab,
@@ -123,6 +127,8 @@ pub struct App {
 }
 
 impl App {
+    /// Create the app: apply the theme and fonts, find the local networks, load saved
+    /// settings, look for Nmap and (unless in demo mode) start the automatic CVE-database update.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         apply_style(&cc.egui_ctx);
         // Follows the desktop's light/dark setting; PROTON_IP_SCANNER_THEME
@@ -261,6 +267,7 @@ impl App {
         self.last_summary = Some("Demo data: 7 live device(s) out of 254 address(es) in 4.2 s".into());
     }
 
+    /// True while any scan (Proton's own or Nmap) is running; most buttons are disabled then.
     fn busy(&self) -> bool {
         self.job.is_some() || self.nmap_job.is_some()
     }
@@ -272,6 +279,7 @@ impl App {
         self.ping = Some(PingWindow::new(ctx, ip, h.display_name().to_string(), ports));
     }
 
+    /// Show a short message in the status bar for a few seconds (`error` = red).
     fn notify(&mut self, text: impl Into<String>, error: bool) {
         self.toast = Some(Toast { text: text.into(), error, until: Instant::now() + Duration::from_secs(6) });
     }
@@ -280,6 +288,7 @@ impl App {
     // Starting / stopping scans
     // -----------------------------------------------------------------
 
+    /// Start a discovery scan of the IP range in the toolbar (ping/ARP/TCP + names).
     fn start_discovery(&mut self) {
         match range::parse_ip_ranges(&self.range_text) {
             Ok(ips) => {
@@ -305,6 +314,7 @@ impl App {
         self.start_port_scan_as(targets, JobKind::Ports);
     }
 
+    /// Start a port scan of `targets` with the port list from the toolbar.
     fn start_port_scan_as(&mut self, targets: Vec<Ipv4Addr>, kind: JobKind) {
         if targets.is_empty() {
             self.notify("Find some devices first, then scan their ports.", true);
@@ -327,6 +337,7 @@ impl App {
         }
     }
 
+    /// Ask every running job (scan or Nmap) to stop; results found so far are kept.
     fn stop(&mut self) {
         if let Some((job, _)) = &self.job {
             job.cancel();
@@ -495,6 +506,7 @@ impl App {
         }
     }
 
+    /// Save the device list as CSV or HTML in the Documents folder and say where.
     fn export(&mut self, format: Format) {
         if self.hosts.is_empty() {
             return self.notify("Nothing to export yet — run a scan first.", true);
@@ -725,6 +737,7 @@ impl App {
         });
     }
 
+    /// Bottom bar: progress of the running job, or a summary of the last scan.
     fn status_bar(&mut self, ui: &mut egui::Ui) {
         ui.add_space(5.0);
         ui.horizontal(|ui| {
@@ -775,6 +788,7 @@ impl App {
         ui.add_space(5.0);
     }
 
+    /// The device table (filterable, sortable) with right-click menus.
     fn results(&mut self, ui: &mut egui::Ui) {
         // Search row.
         ui.horizontal(|ui| {
@@ -896,6 +910,7 @@ impl App {
         }
     }
 
+    /// Carry out an action chosen from a row's right-click menu.
     fn do_row_action(&mut self, ctx: &egui::Context, a: RowAction) {
         let Some(h) = self.index.get(&a.ip()).map(|&i| self.hosts[i].clone()) else { return };
         match a {
@@ -929,6 +944,7 @@ impl App {
         }
     }
 
+    /// Right-hand panel: everything known about the selected device.
     fn details(&mut self, ui: &mut egui::Ui) {
         let Some(h) = self.selected.and_then(|ip| self.index.get(&ip)).map(|&i| self.hosts[i].clone()) else {
             ui.add_space(30.0);
@@ -1042,6 +1058,7 @@ impl App {
         }
     }
 
+    /// The Settings window (scan speed, timeouts, names, Nmap, NVD key, CVE auto-update).
     fn settings_window(&mut self, ctx: &egui::Context) {
         let mut open = self.show_settings;
         egui::Window::new("⚙ Settings").open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
@@ -1132,6 +1149,7 @@ impl App {
         self.show_settings = open;
     }
 
+    /// The About window (version, licence, data sources).
     fn about_window(&mut self, ctx: &egui::Context) {
         let mut open = self.show_about;
         egui::Window::new("About Proton IP Scanner").open(&mut open).resizable(false).collapsible(false).show(
@@ -1165,6 +1183,7 @@ impl App {
 }
 
 impl eframe::App for App {
+    /// Draw one frame: poll background jobs, then header, toolbar, table and panels.
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.poll_job();
         self.poll_nmap();
@@ -1259,6 +1278,7 @@ enum RowAction {
 }
 
 impl RowAction {
+    /// The IP address this action is about.
     fn ip(&self) -> Ipv4Addr {
         match *self {
             RowAction::CopyIp(ip)
@@ -1274,6 +1294,7 @@ impl RowAction {
     }
 }
 
+/// Right-click menu for a device row; returns the chosen action, if any.
 fn row_menu(ui: &mut egui::Ui, ip: Ipv4Addr) -> Option<RowAction> {
     let mut a = None;
     if ui.button("🔍 Scan ports of this device").clicked() {
@@ -1323,6 +1344,7 @@ fn open_url(ctx: &egui::Context, ip: Ipv4Addr, scheme: &'static str, port: u16) 
     ctx.open_url(egui::OpenUrl::new_tab(url));
 }
 
+/// One line in the details panel for an open port (click to open web ports).
 fn port_row(ui: &mut egui::Ui, ip: Ipv4Addr, p: &OpenPort) {
     ui.horizontal(|ui| {
         ui.label(RichText::new(format!("{:>5}", p.port)).monospace().strong().color(GREEN));
@@ -1340,6 +1362,7 @@ fn port_row(ui: &mut egui::Ui, ip: Ipv4Addr, p: &OpenPort) {
     }
 }
 
+/// Does this device match the filter text (IP, MAC, name, vendor or port)?
 fn matches_filter(h: &Host, needle: &str) -> bool {
     let mac = h.mac.map(|m| m.to_string().to_ascii_lowercase()).unwrap_or_default();
     h.ip.to_string().contains(needle)
@@ -1353,10 +1376,13 @@ fn matches_filter(h: &Host, needle: &str) -> bool {
         })
 }
 
+/// Number of open ports for sorting (-1 = not scanned yet).
 fn port_count(h: &Host) -> i64 {
     h.ports.as_ref().map(|p| p.len() as i64).unwrap_or(-1)
 }
 
+/// Response time for the table ("<1 ms", "12 ms"); for devices that did not answer
+/// pings, how they were found instead ("—" for this computer).
 fn rtt_text(h: &Host) -> String {
     match h.rtt {
         Some(d) if d < Duration::from_millis(1) => "<1 ms".into(),
@@ -1368,6 +1394,7 @@ fn rtt_text(h: &Host) -> String {
     }
 }
 
+/// Open ports as a short text for the table, e.g. "22, 80, 443".
 fn ports_summary(h: &Host) -> String {
     match &h.ports {
         None => String::new(),

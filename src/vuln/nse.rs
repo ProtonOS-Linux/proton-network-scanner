@@ -228,6 +228,7 @@ pub fn findings(
     (done, cves)
 }
 
+/// Finding for a vulnerability an NSE script reported as (likely) vulnerable.
 fn vuln_finding(ip: Ipv4Addr, port: u16, service: &str, s: &Script, v: &crate::nmap::parse::ScriptVuln) -> Finding {
     let severity = match v.risk.as_deref() {
         Some("CRITICAL") => Severity::Critical,

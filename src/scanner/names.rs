@@ -85,8 +85,11 @@ pub struct NameQuery {
 pub fn ask_device(ip: Ipv4Addr, q: NameQuery, timeout: Duration) -> DeviceNames {
     // Transaction ids: any values; replies must echo them.
     const NB_ID: u16 = 0x5052; // "PR"
+    /// Query id for mDNS questions (lets us recognise our own answers).
     const MDNS_ID: u16 = 0x5053;
+    /// Query id for LLMNR questions.
     const LLMNR_ID: u16 = 0x5054;
+    /// Query id for reverse-DNS questions to the router.
     const DNS_ID: u16 = 0x5056;
 
     // (socket, kind) for each query we managed to send.
@@ -230,6 +233,7 @@ pub fn sweep(targets: &[Ipv4Addr], local_addrs: &[Ipv4Addr], wait: Duration) -> 
     found
 }
 
+/// Are both addresses in the same /24 network?
 fn same_24(a: Ipv4Addr, b: Ipv4Addr) -> bool {
     a.octets()[..3] == b.octets()[..3]
 }
@@ -360,6 +364,7 @@ fn ip_from_reverse(name: &str) -> Option<Ipv4Addr> {
     (p.len() == 4).then(|| Ipv4Addr::new(p[3], p[2], p[1], p[0]))
 }
 
+/// The domain name inside a record's data (e.g. a PTR answer).
 fn rdata_name(msg: &[u8], rdata: (usize, usize)) -> Option<String> {
     read_name(msg, rdata.0).map(|(n, _)| n)
 }
@@ -422,6 +427,7 @@ fn ptr_query(ip: Ipv4Addr) -> Vec<u8> {
     p
 }
 
+/// Copy of a DNS query with its 16-bit id replaced.
 fn with_id(q: &[u8], id: u16) -> Vec<u8> {
     let mut v = q.to_vec();
     if let Some(head) = v.get_mut(0..2) {

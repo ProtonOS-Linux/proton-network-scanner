@@ -69,6 +69,7 @@ impl Product {
         Product { name: name.into(), version: clean(&shown, 40), cpe, backported: false }
     }
 
+    /// "OpenSSH 8.9p1" (name and version) for tables and reports.
     pub fn label(&self) -> String {
         if self.version.is_empty() { self.name.clone() } else { format!("{} {}", self.name, self.version) }
     }
@@ -99,6 +100,7 @@ pub struct ProbeCtx {
 }
 
 impl ProbeCtx {
+    /// Settings for probing one assessment: timeouts, login checks and the HTTP client.
     pub fn new(timeout: Duration, safe_logins: bool) -> ProbeCtx {
         let tls = ureq::tls::TlsConfig::builder().disable_verification(true).build();
         let http: ureq::Agent = ureq::Agent::config_builder()
@@ -116,7 +118,9 @@ impl ProbeCtx {
     }
 }
 
+/// Ports where the web check uses HTTPS.
 const HTTPS_PORTS: [u16; 7] = [443, 4443, 5001, 8443, 9443, 10443, 7443];
+/// Ports where the web check uses plain HTTP.
 const HTTP_PORTS: [u16; 17] =
     [80, 81, 591, 2375, 3000, 5000, 7547, 8000, 8008, 8080, 8081, 8088, 8090, 8888, 9000, 9200, 32400];
 
@@ -153,6 +157,7 @@ pub fn probe(ip: Ipv4Addr, port: u16, ctx: &ProbeCtx) -> (Service, Vec<Finding>)
     (svc, findings)
 }
 
+/// Service name for a port number ("SSH", "HTTPS" …, or "TCP 1234").
 fn label_for(port: u16) -> String {
     let s = service_name(port);
     if s.is_empty() { format!("TCP {port}") } else { s.to_string() }
@@ -208,6 +213,7 @@ fn generic_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx)
     }
 }
 
+/// Web server: read the Server header and page, check for cleartext logins and open APIs.
 fn http_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx, scheme: &str) {
     let (ip, port) = (svc.ip, svc.port);
     let path = if port == 2375 { "/version" } else { "/" };
@@ -262,6 +268,7 @@ fn http_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx, sc
     }
 }
 
+/// The parts of an HTTP response the checks need.
 struct HttpResp {
     status: u16,
     server: Option<String>,
@@ -269,6 +276,7 @@ struct HttpResp {
     body: String,
 }
 
+/// One GET request (no redirects, no proxy, size-limited); None on any error.
 fn http_get(ctx: &ProbeCtx, scheme: &str, ip: Ipv4Addr, port: u16, path: &str) -> Option<HttpResp> {
     // The URL is built only from a parsed address, a constant scheme/path and a number.
     let url = format!("{scheme}://{ip}:{port}{path}");
@@ -285,6 +293,7 @@ fn http_get(ctx: &ProbeCtx, scheme: &str, ip: Ipv4Addr, port: u16, path: &str) -
     })
 }
 
+/// MySQL/MariaDB: read the version from the server greeting.
 fn mysql_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     let Some(mut s) = connect(svc.ip, svc.port, ctx.timeout) else { return };
     let pkt = read_some(&mut s, 512, ctx.timeout);
@@ -309,6 +318,7 @@ fn mysql_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     }
 }
 
+/// Redis: send `INFO server` and see whether it answers without a password.
 fn redis_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     let Some(mut s) = connect(svc.ip, svc.port, ctx.timeout) else { return };
     if s.write_all(b"INFO server\r\n").is_err() {
@@ -332,6 +342,7 @@ fn redis_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     }
 }
 
+/// VNC: read the protocol version and whether "no authentication" is offered.
 fn vnc_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     let Some(mut s) = connect(svc.ip, svc.port, ctx.timeout) else { return };
     let hello = read_some(&mut s, 12, ctx.timeout);
@@ -363,6 +374,7 @@ fn vnc_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     }
 }
 
+/// memcached: send `version` and see whether it answers.
 fn memcached_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     let Some(mut s) = connect(svc.ip, svc.port, ctx.timeout) else { return };
     if s.write_all(b"version\r\n").is_err() {
@@ -381,6 +393,7 @@ fn memcached_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCt
     }
 }
 
+/// MQTT: connect without credentials and see whether the broker accepts it.
 fn mqtt_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     if !ctx.safe_logins {
         return;
@@ -409,6 +422,7 @@ fn mqtt_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     }
 }
 
+/// FTP: read the banner; optionally try the documented `anonymous` login, then log out.
 fn ftp_probe(svc: &mut Service, findings: &mut Vec<Finding>, ctx: &ProbeCtx) {
     let Some(mut s) = connect(svc.ip, svc.port, ctx.timeout) else { return };
     let Some(greeting) = ftp_reply(&mut s, ctx.timeout) else { return };
@@ -592,6 +606,7 @@ pub(crate) fn is_distro_build(s: &str) -> bool {
 // Small socket helpers
 // ---------------------------------------------------------------------------
 
+/// TCP connection with a timeout; None if refused or unreachable.
 fn connect(ip: Ipv4Addr, port: u16, timeout: Duration) -> Option<TcpStream> {
     let s = TcpStream::connect_timeout(&SocketAddr::V4(SocketAddrV4::new(ip, port)), timeout).ok()?;
     s.set_read_timeout(Some(timeout * 2)).ok()?;

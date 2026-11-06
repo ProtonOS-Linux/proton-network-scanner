@@ -9,9 +9,13 @@ use crate::vuln::score::Severity;
 pub const ACCENT: Color32 = Color32::from_rgb(31, 111, 235);
 /// Logo magenta (also used for report branding).
 pub const MAGENTA: Color32 = Color32::from_rgb(200, 28, 146);
+/// Darker brand magenta (pressed buttons, borders).
 pub const MAGENTA_DARK: Color32 = Color32::from_rgb(132, 16, 98);
+/// "Good" green (live devices, confirmed-OK states).
 pub const GREEN: Color32 = Color32::from_rgb(46, 160, 67);
+/// Warning amber.
 pub const AMBER: Color32 = Color32::from_rgb(210, 153, 34);
+/// Error / danger red.
 pub const RED: Color32 = Color32::from_rgb(207, 34, 46);
 
 /// Height of every control in the toolbars, so text boxes, buttons and menus
@@ -85,6 +89,7 @@ pub fn logo(ui: &mut egui::Ui, size: f32) {
     p.circle_filled(c, 2.0 * k, Color32::WHITE);
 }
 
+/// Colour for a severity level (same colours as the reports).
 pub fn severity_color(s: Severity) -> Color32 {
     let (r, g, b) = s.rgb();
     Color32::from_rgb(r, g, b)

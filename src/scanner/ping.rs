@@ -84,6 +84,7 @@ pub fn icmp_ping(ip: Ipv4Addr, timeout: Duration, _seq: u16) -> std::io::Result<
         ICMP_ECHO_REPLY, IcmpCloseHandle, IcmpCreateFile, IcmpSendEcho,
     };
 
+    /// Data carried in our ICMP echo requests (lets us recognise our replies).
     const PAYLOAD: &[u8; 16] = b"ProtonIPScanner!";
     // The reply buffer must hold one ICMP_ECHO_REPLY, the echoed payload and
     // 8 extra bytes for a possible ICMP error message (documented by Microsoft).

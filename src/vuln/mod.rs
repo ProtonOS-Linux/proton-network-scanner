@@ -86,6 +86,7 @@ pub enum Confidence {
 }
 
 impl Confidence {
+    /// Name shown in the UI and reports.
     pub fn label(self) -> &'static str {
         match self {
             Confidence::Confirmed => "Confirmed",
@@ -115,6 +116,7 @@ impl Confidence {
 }
 
 impl Finding {
+    /// Is this finding a CVE (id like CVE-2024-1234)?
     pub fn is_cve(&self) -> bool {
         self.id.starts_with("CVE-")
     }
@@ -130,6 +132,7 @@ impl Finding {
             .then(self.ip.cmp(&other.ip))
     }
 
+    /// CVSS base score, or 0 when not scored.
     pub fn cvss_score(&self) -> f32 {
         self.cvss.as_ref().map(|c| c.score).unwrap_or(0.0)
     }
@@ -177,7 +180,9 @@ pub enum CveSource {
 }
 
 impl CveSource {
+    /// Every source, in menu order.
     pub const ALL: [CveSource; 3] = [CveSource::Online, CveSource::Offline, CveSource::Off];
+    /// Name shown in menus and reports.
     pub fn label(self) -> &'static str {
         match self {
             CveSource::Online => "Online (NVD, newest)",
@@ -210,6 +215,7 @@ pub enum Engine {
 }
 
 impl Engine {
+    /// Name of the engine shown in menus ("Built-in" / "Nmap").
     pub fn label(self) -> &'static str {
         match self {
             Engine::Builtin => "Built-in",
@@ -264,6 +270,7 @@ pub enum Phase {
 }
 
 impl Phase {
+    /// Phase from its stored number (anything unknown = Done).
     fn from_u8(v: u8) -> Phase {
         match v {
             0 => Phase::Discovery,
@@ -274,6 +281,7 @@ impl Phase {
         }
     }
 
+    /// Text shown in the status bar for this phase.
     pub fn label(self) -> &'static str {
         match self {
             Phase::Discovery => "1/4 Finding live hosts",
@@ -296,18 +304,22 @@ pub struct Progress {
 }
 
 impl Progress {
+    /// Current phase.
     pub fn phase(&self) -> Phase {
         Phase::from_u8(self.phase.load(Ordering::Relaxed))
     }
+    /// Extra detail for the status bar (e.g. which product is being looked up).
     pub fn detail(&self) -> String {
         self.detail.lock().map(|d| d.clone()).unwrap_or_default()
     }
+    /// Enter a phase that has `total` steps.
     fn set(&self, phase: Phase, total: usize) {
         self.phase.store(phase as u8, Ordering::Relaxed);
         self.total.store(total, Ordering::Relaxed);
         self.done.store(0, Ordering::Relaxed);
         self.set_detail("");
     }
+    /// Set the status-bar detail text.
     fn set_detail(&self, s: &str) {
         if let Ok(mut d) = self.detail.lock() {
             *d = s.to_string();
@@ -336,12 +348,15 @@ pub struct VulnJob {
 }
 
 impl VulnJob {
+    /// Ask the assessment to stop.
     pub fn cancel(&self) {
         self.cancel.store(true, Ordering::Relaxed);
     }
+    /// Has Stop been pressed?
     pub fn is_cancelled(&self) -> bool {
         self.cancel.load(Ordering::Relaxed)
     }
+    /// Time since the assessment started.
     pub fn elapsed(&self) -> Duration {
         self.finished_at.unwrap_or_else(Instant::now) - self.started
     }
@@ -365,6 +380,8 @@ pub fn start(opts: VulnOptions) -> VulnJob {
     VulnJob { cancel, progress, rx, started: Instant::now(), finished_at: None }
 }
 
+/// The whole assessment, on its own thread: discovery → ports → services and
+/// configuration checks (Proton and/or Nmap) → CVE lookups. Results are sent on `tx`.
 fn run(opts: &VulnOptions, tx: &Sender<VulnEvent>, progress: &Progress, cancel: &AtomicBool) {
     let settings = Settings {
         speed: opts.speed,
@@ -1008,7 +1025,7 @@ struct Approx<'a> {
     product: &'a detect::Product,
     /// NVD vendor and product.
     key: (String, String),
-    /// Major version families it could be (4 → [4]; 3.X-4.X → [3, 4]).
+    /// Major version families it could be (4 → `[4]`; 3.X-4.X → `[3, 4]`).
     families: Vec<u64>,
 }
 

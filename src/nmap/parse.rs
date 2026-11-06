@@ -39,6 +39,7 @@ pub struct NmapHost {
     pub scripts: Vec<Script>,
 }
 
+/// Nmap's operating-system guess for a device.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct OsGuess {
     pub name: String,
@@ -49,6 +50,7 @@ pub struct OsGuess {
 }
 
 impl OsGuess {
+    /// "Linux 5.0 - 6.2 (98%, general purpose)".
     pub fn label(&self) -> String {
         match &self.device_type {
             Some(t) => format!("{} ({}%, {t})", self.name, self.accuracy),
@@ -221,6 +223,7 @@ impl Stream {
     }
 }
 
+/// XML parser limits: no DTD (no entity expansion), at most 2 M nodes.
 fn options<'a>() -> roxmltree::ParsingOptions<'a> {
     roxmltree::ParsingOptions { allow_dtd: false, nodes_limit: 2_000_000, ..Default::default() }
 }
@@ -330,6 +333,7 @@ fn parse_port(p: roxmltree::Node) -> Option<NmapPort> {
     Some(out)
 }
 
+/// Best `<osmatch>` (Nmap lists the most likely first).
 fn parse_os(n: roxmltree::Node) -> Option<OsGuess> {
     // Nmap lists matches best first.
     let m = n.children().find(|c| c.has_tag_name("osmatch"))?;
@@ -344,10 +348,12 @@ fn parse_os(n: roxmltree::Node) -> Option<OsGuess> {
     (!name.is_empty()).then_some(OsGuess { name, accuracy, device_type })
 }
 
+/// All `<script>` results under a port or `<hostscript>` (at most MAX_SCRIPTS).
 fn parse_scripts(parent: roxmltree::Node) -> Vec<Script> {
     parent.children().filter(|c| c.has_tag_name("script")).take(MAX_SCRIPTS).filter_map(parse_script).collect()
 }
 
+/// One `<script>`: id (validated), cleaned output, structured values and vulnerabilities.
 fn parse_script(s: roxmltree::Node) -> Option<Script> {
     let id = s.attribute("id")?;
     if id.is_empty() || id.len() > 64 || !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
@@ -368,6 +374,7 @@ fn parse_script(s: roxmltree::Node) -> Option<Script> {
     Some(script)
 }
 
+/// One vulnerability table in NSE's `vulns` format (title, state, CVE ids, refs).
 fn parse_vuln(t: roxmltree::Node) -> Option<ScriptVuln> {
     let elem = |key: &str| {
         t.children().find(|c| c.has_tag_name("elem") && c.attribute("key") == Some(key)).and_then(|c| c.text())
@@ -444,6 +451,7 @@ fn is_cpe22(c: &str) -> bool {
         && c.chars().all(|ch| ch.is_ascii_alphanumeric() || ":/._-~%".contains(ch))
 }
 
+/// "AA:BB:CC:DD:EE:FF" with hex digits only.
 fn is_mac(s: &str) -> bool {
     s.len() == 17
         && s.split(':').count() == 6

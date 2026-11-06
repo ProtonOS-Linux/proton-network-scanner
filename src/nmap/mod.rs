@@ -78,11 +78,13 @@ pub struct NmapInfo {
 }
 
 impl NmapInfo {
+    /// "Nmap 7.94SVN" for the UI.
     pub fn label(&self) -> String {
         format!("Nmap {}", self.version)
     }
 }
 
+/// Cached result of looking for Nmap (outer None = not looked yet).
 static FOUND: Mutex<Option<Option<NmapInfo>>> = Mutex::new(None);
 
 /// Nmap on this computer (looked up once, then cached; see [`refresh`]).
@@ -134,6 +136,7 @@ pub fn missing_text() -> &'static str {
      then Settings → Look again."
 }
 
+/// Find the first candidate that is a working Nmap 7+.
 fn locate() -> Option<NmapInfo> {
     for path in candidates() {
         if !path.is_file() {
@@ -175,6 +178,7 @@ fn version_of(path: &Path) -> Option<String> {
 #[cfg(unix)]
 pub fn is_trusted(path: &Path) -> bool {
     use std::os::unix::fs::MetadataExt;
+    /// The only folders an Nmap may be in to be started as root.
     const SYSTEM_DIRS: [&str; 5] = ["/usr/bin", "/usr/sbin", "/usr/local/bin", "/bin", "/sbin"];
     let Ok(real) = std::fs::canonicalize(path) else { return false };
     if !real.parent().is_some_and(|d| SYSTEM_DIRS.iter().any(|s| d == Path::new(s))) {
@@ -193,6 +197,7 @@ pub fn is_trusted(path: &Path) -> bool {
     true
 }
 
+/// Windows: never elevated, so nothing to check.
 #[cfg(not(unix))]
 pub fn is_trusted(_path: &Path) -> bool {
     // Windows never elevates Nmap (Npcap provides raw access).
@@ -208,13 +213,16 @@ fn running_as_root() -> bool {
         .unwrap_or(false)
 }
 
+/// Windows: start Nmap without flashing a console window.
 #[cfg(windows)]
 fn hide_window(cmd: &mut Command) {
     use std::os::windows::process::CommandExt;
+    /// Process creation flag that hides the console window.
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     cmd.creation_flags(CREATE_NO_WINDOW);
 }
 
+/// Other systems: nothing to hide.
 #[cfg(not(windows))]
 fn hide_window(_cmd: &mut Command) {}
 
@@ -229,6 +237,7 @@ pub struct Request {
     pub scripts: Scripts,
 }
 
+/// Which NSE scripts Nmap runs.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Scripts {
     /// Version detection only (used by the tests: fastest).
@@ -493,10 +502,12 @@ pub fn spawn(req: Request, cancel: Arc<AtomicBool>) -> mpsc::Receiver<Result<Eve
     rx
 }
 
+/// Linux: a deep scan goes through pkexec unless we already run as root.
 #[cfg(target_os = "linux")]
 fn uses_pkexec() -> bool {
     !running_as_root()
 }
+/// Other systems never use pkexec.
 #[cfg(not(target_os = "linux"))]
 fn uses_pkexec() -> bool {
     false
@@ -581,6 +592,7 @@ fn read_line_capped(r: &mut impl BufRead, out: &mut Vec<u8>, max: usize) -> std:
     }
 }
 
+/// Wait up to `limit` for the process to exit; kill it (and reap it later) if it does not.
 fn wait_with_timeout(mut child: Child, limit: Duration) -> Option<i32> {
     let start = Instant::now();
     loop {
@@ -603,7 +615,7 @@ fn reap_later(mut child: Child) {
     });
 }
 
-/// Copy what Nmap found about a device into the Network Scanner's [`Host`]:
+/// Copy what Nmap found about a device into the Network Scanner's [`Host`](crate::scanner::Host):
 /// operating system, service versions (shown as the port's banner), MAC
 /// address and name when Proton had none, and identification script output.
 pub fn apply_to_host(host: &mut crate::scanner::Host, n: &NmapHost) {

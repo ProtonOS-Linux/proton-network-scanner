@@ -41,9 +41,11 @@ pub enum Severity {
 }
 
 impl Severity {
+    /// Every severity, most severe first (tiles, reports).
     pub const ALL: [Severity; 6] =
         [Severity::Critical, Severity::High, Severity::Medium, Severity::Low, Severity::Review, Severity::Info];
 
+    /// CVSS band for a score (0 = Info).
     pub fn from_score(score: f32) -> Severity {
         match score {
             s if s >= 9.0 => Severity::Critical,
@@ -54,6 +56,7 @@ impl Severity {
         }
     }
 
+    /// Name shown in the UI and reports.
     pub fn label(self) -> &'static str {
         match self {
             Severity::Critical => "Critical",

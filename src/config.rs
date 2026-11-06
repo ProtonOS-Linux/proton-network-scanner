@@ -11,6 +11,7 @@ use std::path::PathBuf;
 
 use serde_json::{Value, json};
 
+/// Settings saved between runs (in `settings.json`; never secrets).
 #[derive(Clone, Debug, PartialEq)]
 pub struct Config {
     /// Refresh the offline CVE database in the background when the app opens
@@ -19,16 +20,19 @@ pub struct Config {
 }
 
 impl Default for Config {
+    /// Defaults for a first start.
     fn default() -> Self {
         Config { auto_update_db: true }
     }
 }
 
+/// Path of `settings.json` in the user's config folder.
 fn path() -> Option<PathBuf> {
     dirs::config_dir().map(|d| d.join("proton-ip-scanner").join("settings.json"))
 }
 
 impl Config {
+    /// Load the saved settings; a missing, unreadable or invalid file gives the defaults.
     pub fn load() -> Config {
         let Some(p) = path() else { return Config::default() };
         // Refuse anything large: this file is a few bytes.

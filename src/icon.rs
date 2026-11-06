@@ -6,6 +6,7 @@ use eframe::egui::IconData;
 
 /// 64×64 RGBA icon for the window title bar / taskbar.
 pub fn window_icon() -> IconData {
+    /// Icon size in pixels (square).
     const N: usize = 64;
     let mut rgba = vec![0u8; N * N * 4];
     let c = (N as f32 - 1.0) / 2.0;

@@ -12,6 +12,7 @@ fn random_bytes(rng: &mut Rng, max: usize) -> Vec<u8> {
     (0..len).map(|_| if rng.next().is_multiple_of(4) { (rng.next() % 16) as u8 } else { rng.next() as u8 }).collect()
 }
 
+/// Random and corrupted packets fed to every network parser must never crash.
 #[test]
 fn network_parsers_never_panic() {
     let mut rng = Rng(0xC0FFEE);
@@ -29,6 +30,7 @@ fn network_parsers_never_panic() {
     }
 }
 
+/// Random and corrupted JSON fed to the NVD/EPSS parsers must never crash.
 #[test]
 fn json_parsers_never_panic() {
     let mut rng = Rng(0xBEEF);
@@ -59,6 +61,7 @@ fn json_parsers_never_panic() {
     }
 }
 
+/// Random and garbage files imported as an offline database must be rejected cleanly.
 #[test]
 fn offline_database_import_never_panics() {
     use crate::vuln::offline::OfflineDb;

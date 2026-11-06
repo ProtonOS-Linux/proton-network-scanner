@@ -58,6 +58,7 @@ impl Check {
     }
 }
 
+/// Telnet: remote login without encryption.
 pub static TELNET: Check = Check {
     id: "PIS-0001",
     title: "Telnet service enabled (cleartext remote login)",
@@ -71,6 +72,7 @@ pub static TELNET: Check = Check {
                change any default password.",
 };
 
+/// FTP server allows anonymous login.
 pub static FTP_ANONYMOUS: Check = Check {
     id: "PIS-0002",
     title: "Anonymous FTP login allowed",
@@ -83,6 +85,7 @@ pub static FTP_ANONYMOUS: Check = Check {
                FTP service if it is not needed.",
 };
 
+/// Redis database without a password.
 pub static REDIS_NOAUTH: Check = Check {
     id: "PIS-0003",
     title: "Redis database accessible without authentication",
@@ -96,6 +99,7 @@ pub static REDIS_NOAUTH: Check = Check {
                and enable protected-mode.",
 };
 
+/// VNC remote desktop without a password.
 pub static VNC_NOAUTH: Check = Check {
     id: "PIS-0004",
     title: "VNC remote desktop without password",
@@ -107,6 +111,7 @@ pub static VNC_NOAUTH: Check = Check {
     solution: "Configure a VNC password (or system authentication), and allow VNC only through SSH or a VPN.",
 };
 
+/// Docker API open without TLS (full control of the host).
 pub static DOCKER_API: Check = Check {
     id: "PIS-0005",
     title: "Docker Engine API exposed without authentication",
@@ -120,6 +125,7 @@ pub static DOCKER_API: Check = Check {
                it with TLS client certificates (port 2376).",
 };
 
+/// Elasticsearch without authentication.
 pub static ELASTIC_NOAUTH: Check = Check {
     id: "PIS-0006",
     title: "Elasticsearch accessible without authentication",
@@ -133,6 +139,7 @@ pub static ELASTIC_NOAUTH: Check = Check {
                a private interface.",
 };
 
+/// memcached open to the network.
 pub static MEMCACHED_NOAUTH: Check = Check {
     id: "PIS-0007",
     title: "Memcached accessible without authentication",
@@ -145,6 +152,7 @@ pub static MEMCACHED_NOAUTH: Check = Check {
                required.",
 };
 
+/// MQTT broker allows anonymous clients.
 pub static MQTT_ANONYMOUS: Check = Check {
     id: "PIS-0008",
     title: "MQTT broker allows anonymous clients",
@@ -157,6 +165,7 @@ pub static MQTT_ANONYMOUS: Check = Check {
                (port 8883).",
 };
 
+/// Login page served over plain HTTP.
 pub static HTTP_CLEARTEXT_LOGIN: Check = Check {
     id: "PIS-0009",
     title: "Login page served over unencrypted HTTP",
@@ -169,6 +178,7 @@ pub static HTTP_CLEARTEXT_LOGIN: Check = Check {
                device from a trusted, wired network.",
 };
 
+/// Remote Desktop (RDP) reachable (informational).
 pub static RDP_EXPOSED: Check = Check {
     id: "PIS-0010",
     title: "Remote Desktop (RDP) reachable",
@@ -181,6 +191,7 @@ pub static RDP_EXPOSED: Check = Check {
                and never forward port 3389 from the internet.",
 };
 
+/// Windows file sharing (SMB) reachable (informational).
 pub static SMB_EXPOSED: Check = Check {
     id: "PIS-0011",
     title: "Windows file sharing (SMB) reachable",
@@ -192,6 +203,7 @@ pub static SMB_EXPOSED: Check = Check {
     solution: "Keep the device updated, disable SMBv1, and make sure port 445 is not forwarded by the router.",
 };
 
+/// Software version announced to anyone (informational).
 pub static VERSION_DISCLOSED: Check = Check {
     id: "PIS-0012",
     title: "Software version detected",
@@ -204,6 +216,7 @@ pub static VERSION_DISCLOSED: Check = Check {
                server_tokens off).",
 };
 
+/// FTP sends passwords unencrypted.
 pub static FTP_CLEARTEXT: Check = Check {
     id: "PIS-0013",
     title: "Unencrypted FTP service",
@@ -214,6 +227,7 @@ pub static FTP_CLEARTEXT: Check = Check {
     solution: "Use SFTP (over SSH) or FTPS instead, or disable the FTP service.",
 };
 
+/// Database port reachable from the network (informational).
 pub static DATABASE_EXPOSED: Check = Check {
     id: "PIS-0014",
     title: "Database server reachable from the network",
@@ -228,6 +242,7 @@ pub static DATABASE_EXPOSED: Check = Check {
 
 // ---- Checks interpreted from Nmap's safe NSE scripts (Nmap engine only) ----
 
+/// From Nmap's smb2-security-mode / smb-security-mode scripts.
 pub static SMB_SIGNING: Check = Check {
     id: "PIS-0015",
     title: "SMB signing not required",
@@ -240,6 +255,7 @@ pub static SMB_SIGNING: Check = Check {
                communications (always)'; in Samba set 'server signing = mandatory'.",
 };
 
+/// From Nmap's sslv2 script.
 pub static SSLV2: Check = Check {
     id: "PIS-0016",
     title: "Obsolete SSL 2.0 protocol supported",
@@ -252,6 +268,7 @@ pub static SSLV2: Check = Check {
                embedded devices, install the latest firmware.",
 };
 
+/// From Nmap's ssl-cert script (certificate end date in the past).
 pub static CERT_EXPIRED: Check = Check {
     id: "PIS-0017",
     title: "TLS certificate expired",
@@ -263,6 +280,7 @@ pub static CERT_EXPIRED: Check = Check {
     solution: "Renew the certificate (or let the device create a new one) and install it on the service.",
 };
 
+/// From Nmap's http-methods script.
 pub static HTTP_RISKY_METHODS: Check = Check {
     id: "PIS-0018",
     title: "Web server allows risky HTTP methods",
@@ -274,6 +292,7 @@ pub static HTTP_RISKY_METHODS: Check = Check {
     solution: "Allow only the methods the site needs (usually GET, HEAD, POST) in the web server configuration.",
 };
 
+/// From Nmap's x11-access script.
 pub static X11_OPEN: Check = Check {
     id: "PIS-0019",
     title: "X11 display server accepts connections from anyone",

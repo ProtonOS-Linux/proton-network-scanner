@@ -74,8 +74,11 @@ pub fn aliases(vendor: &str, product: &str) -> Vec<(String, String)> {
     v
 }
 
+/// Marker every database file must carry.
 const FORMAT: &str = "proton-vulndb";
+/// Largest compressed file accepted.
 const MAX_PACKED: u64 = 32 * 1024 * 1024;
+/// Largest unpacked size accepted (gzip-bomb protection).
 const MAX_UNPACKED: u64 = 256 * 1024 * 1024;
 
 /// A loaded offline database.
@@ -94,6 +97,7 @@ pub struct DbInfo {
 }
 
 impl DbInfo {
+    /// "3 634 CVEs · updated 2026-11-04".
     pub fn label(&self) -> String {
         format!("{} CVEs, updated {}", self.cves, date(self.created))
     }
@@ -107,14 +111,17 @@ impl DbInfo {
     }
 }
 
+/// The app's data folder (holds the installed database).
 fn data_dir() -> Option<PathBuf> {
     dirs::data_local_dir().map(|d| d.join("proton-ip-scanner"))
 }
 
+/// Path of the installed database file.
 fn installed_path() -> Option<PathBuf> {
     data_dir().map(|d| d.join("vulndb.json.gz"))
 }
 
+/// Path of the small file describing the installed database.
 fn info_path() -> Option<PathBuf> {
     data_dir().map(|d| d.join("vulndb-info.json"))
 }
@@ -142,6 +149,7 @@ impl OfflineDb {
         OfflineDb::from_bytes(&packed)
     }
 
+    /// Unpack and validate a database file (untrusted input: every record is checked).
     pub fn from_bytes(packed: &[u8]) -> Result<OfflineDb, String> {
         let mut json = Vec::new();
         flate2::read::GzDecoder::new(packed)
@@ -175,6 +183,7 @@ impl OfflineDb {
         enc.finish().unwrap_or_default()
     }
 
+    /// Summary (creation date, number of CVEs) of this database.
     pub fn info(&self) -> DbInfo {
         DbInfo { created: self.created, cves: self.cves.len() }
     }
@@ -315,6 +324,7 @@ pub fn export_installed() -> Result<PathBuf, String> {
 // Serialisation (compact field names keep the file small)
 // ---------------------------------------------------------------------------
 
+/// One CVE record as JSON for writing a database file.
 fn record_to_json(c: &CveRecord) -> Value {
     json!({
         "id": c.id, "d": c.description, "kev": c.kev, "p": c.published, "r": c.references, "s": c.solution,
@@ -382,6 +392,7 @@ fn record_from_json(c: &Value) -> Option<CveRecord> {
     })
 }
 
+/// Write a file atomically: new temporary file, then rename over the old one.
 fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
     let tmp = path.with_extension(format!("tmp{}", std::process::id()));
     let _ = fs::remove_file(&tmp);
@@ -397,6 +408,7 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
     res.map_err(|e| format!("could not save the database: {e}"))
 }
 
+/// Current time in seconds since 1970.
 fn now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }

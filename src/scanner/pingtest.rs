@@ -99,6 +99,7 @@ impl PingTest {
         PingTest { probe, rx, running: started.is_ok(), cancel, stats: PingStats::default(), samples: VecDeque::new() }
     }
 
+    /// Stop the test (the thread ends after its current ping).
     pub fn stop(&self) {
         self.cancel.store(true, Ordering::Relaxed);
     }
@@ -126,6 +127,7 @@ impl PingTest {
 }
 
 impl Drop for PingTest {
+    /// Stop the background thread when the test is dropped.
     fn drop(&mut self) {
         // Closing the window stops the thread.
         self.stop();
@@ -148,6 +150,7 @@ pub struct PingStats {
 }
 
 impl PingStats {
+    /// Record one ping: `Some(ms)` = reply time, `None` = lost.
     pub fn add(&mut self, ms: Option<f32>) {
         self.sent += 1;
         self.last_ms = ms;
@@ -168,18 +171,22 @@ impl PingStats {
         self.last = Some(ms);
     }
 
+    /// Number of pings that got no reply.
     pub fn lost(&self) -> u32 {
         self.sent - self.received
     }
 
+    /// Packet loss in percent.
     pub fn loss_percent(&self) -> f32 {
         if self.sent == 0 { 0.0 } else { self.lost() as f32 * 100.0 / self.sent as f32 }
     }
 
+    /// Average reply time in ms (None before the first reply).
     pub fn avg(&self) -> Option<f32> {
         (self.received > 0).then(|| (self.sum / f64::from(self.received)) as f32)
     }
 
+    /// Jitter: average change between consecutive reply times, in ms.
     pub fn jitter(&self) -> Option<f32> {
         (self.jitter_n > 0).then(|| (self.jitter_sum / f64::from(self.jitter_n)) as f32)
     }

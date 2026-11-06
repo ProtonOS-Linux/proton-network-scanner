@@ -31,7 +31,9 @@ use serde_json::Value;
 use super::detect::clean;
 use super::score::{Cvss, Epss};
 
+/// NVD CVE API 2.0 endpoint.
 const NVD_URL: &str = "https://services.nvd.nist.gov/rest/json/cves/2.0";
+/// FIRST EPSS API endpoint.
 const EPSS_URL: &str = "https://api.first.org/data/v1/epss";
 /// Most CVEs kept per product (old software can have hundreds).
 const MAX_CVES_PER_PRODUCT: usize = 400;
@@ -79,6 +81,7 @@ pub struct VulnDb {
 }
 
 impl VulnDb {
+    /// Client for NVD/FIRST with TLS verification; `api_key` raises NVD's rate limit.
     pub fn new(api_key: Option<String>) -> VulnDb {
         let tls = ureq::tls::TlsConfig::builder().root_certs(ureq::tls::RootCerts::PlatformVerifier).build();
         let agent: ureq::Agent = ureq::Agent::config_builder()
@@ -408,7 +411,7 @@ pub fn is_precise_version(v: &str) -> bool {
 }
 
 /// Major version families named by an approximate version:
-/// "4" → [4], "4.X" → [4], "3.X - 4.X" / "3.X-4.X" → [3, 4].
+/// "4" → `[4]`, "4.X" → `[4]`, "3.X - 4.X" / "3.X-4.X" → `[3, 4]`.
 pub fn version_families(v: &str) -> Vec<u64> {
     let mut out: Vec<u64> = v
         .split(|c: char| c.is_whitespace() || c == '-')
@@ -433,6 +436,7 @@ pub fn version_families(v: &str) -> Vec<u64> {
 /// Compare version strings piece by piece: numbers numerically, letters
 /// alphabetically (`1.1.1f < 1.1.1k`, `9.3 < 9.3p2 < 9.10`).
 pub fn cmp_version(a: &str, b: &str) -> std::cmp::Ordering {
+    /// Split a version into number and text pieces ("9.3p2" → 9, 3, p, 2).
     fn pieces(s: &str) -> Vec<(bool, String)> {
         let mut out: Vec<(bool, String)> = Vec::new();
         for c in s.chars() {

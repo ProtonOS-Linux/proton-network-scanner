@@ -25,10 +25,12 @@ use crate::vuln::offline::{self, DbInfo, OfflineDb};
 use crate::vuln::score::Severity;
 use crate::vuln::{self, CveSource, Finding, TopItem, VulnEvent, VulnJob, VulnOptions};
 
+/// Tooltip for the Nmap engine choice.
 const NMAP_HELP: &str = "Nmap identifies services and versions more precisely and runs its SAFE scripts only\n\
      (no exploits, no password guessing, no denial of service, nothing contacts the internet).\n\
      Proton's own configuration checks run as well. Runs as your user, no admin rights.";
 
+/// Tooltip for the Deep scan checkbox.
 const DEEP_HELP: &str = "Deep scan: SYN port scan + operating-system detection.\n\
      Linux: asks for the administrator password for this one Nmap run (pkexec), and only\n\
      for an Nmap installed by your package manager. Nothing keeps running as admin.\n\
@@ -65,6 +67,7 @@ struct DbJob {
     auto: bool,
 }
 
+/// Which table the central area shows.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum View {
     Top10,
@@ -72,6 +75,7 @@ enum View {
     Services,
 }
 
+/// Which devices an assessment scans.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum TargetSource {
     /// The device selected on the Network Scanner tab.
@@ -92,6 +96,8 @@ pub struct NetworkInfo<'a> {
     pub selected: Option<Ipv4Addr>,
 }
 
+/// State of the Vulnerability Scanner tab: options, the running assessment,
+/// its results, and the offline-database download.
 pub struct VulnTab {
     source: TargetSource,
     range_text: String,
@@ -132,6 +138,7 @@ pub struct VulnTab {
 }
 
 impl VulnTab {
+    /// New tab with default options; `default_range` pre-fills the custom target range.
     pub fn new(default_range: String) -> VulnTab {
         VulnTab {
             source: TargetSource::NetworkDevices,
@@ -164,6 +171,7 @@ impl VulnTab {
         }
     }
 
+    /// True while an assessment is running.
     pub fn busy(&self) -> bool {
         self.job.is_some()
     }
@@ -176,6 +184,7 @@ impl VulnTab {
         self.nmap = nmap;
     }
 
+    /// The port list for the chosen preset (or the user's own list).
     fn ports_text(&self) -> &str {
         if self.preset == PORT_PRESETS.len() - 1 { &self.custom_ports } else { PORT_PRESETS[self.preset].1 }
     }
@@ -195,6 +204,7 @@ impl VulnTab {
         self.duration_secs = 0.0;
     }
 
+    /// Start a fresh assessment: clear old results, validate the options and launch the job.
     fn start(&mut self, net: &NetworkInfo<'_>) {
         let ports = match range::parse_ports(self.ports_text()) {
             Ok(p) => p,
@@ -292,12 +302,14 @@ impl VulnTab {
         self.selected = sel_key.and_then(|k| self.findings.iter().position(|f| (f.id.clone(), f.ip, f.port) == k));
     }
 
+    /// Ask the running assessment to stop.
     fn stop(&self) {
         if let Some(j) = &self.job {
             j.cancel();
         }
     }
 
+    /// Everything a report needs, or None when there is nothing to report yet.
     fn report_data(&self) -> Option<ReportData<'_>> {
         if self.findings.is_empty() && self.services.is_empty() {
             return None;
@@ -318,6 +330,7 @@ impl VulnTab {
         })
     }
 
+    /// Write the PDF (`excel` = false) or Excel report and say where it was saved.
     fn export(&mut self, excel: bool) {
         let Some(d) = self.report_data() else {
             return self.toast = Some(("Nothing to report yet — run an assessment first.".into(), true));
@@ -340,6 +353,7 @@ impl VulnTab {
     // UI
     // -----------------------------------------------------------------
 
+    /// The two toolbar rows: start/stop, targets, engine, ports, speed, CVE source and options.
     pub fn toolbar(&mut self, ui: &mut egui::Ui, net: &NetworkInfo<'_>) {
         ui.add_space(10.0);
         ui.horizontal_wrapped(|ui| {
@@ -604,6 +618,8 @@ impl VulnTab {
         }
     }
 
+    /// Start downloading a fresh offline CVE database in the background
+    /// (`auto` = the silent daily update at start-up).
     fn start_db_download(&mut self, api_key: Option<String>, auto: bool) {
         use std::sync::atomic::AtomicBool;
         use std::sync::{Arc, Mutex};
@@ -664,6 +680,7 @@ impl VulnTab {
         }
     }
 
+    /// Status-bar text for this tab: assessment progress or the last result.
     pub fn status(&self, ui: &mut egui::Ui) {
         if let Some(db) = &self.db_job {
             let (done, total, label) = db.progress.lock().map(|g| g.clone()).unwrap_or_default();
@@ -707,6 +724,7 @@ impl VulnTab {
         }
     }
 
+    /// Central area: severity tiles, the view switcher and the selected table.
     pub fn central(&mut self, ui: &mut egui::Ui) {
         if self.findings.is_empty() && self.services.is_empty() {
             let busy_text = self.job.as_ref().map(|j| j.progress.phase().label()).unwrap_or("");
@@ -824,6 +842,7 @@ impl VulnTab {
         });
     }
 
+    /// Indexes of the findings that pass the severity filter and the search text.
     fn visible(&self) -> Vec<usize> {
         let q = self.search.trim().to_ascii_lowercase();
         (0..self.findings.len())
@@ -839,6 +858,7 @@ impl VulnTab {
             .collect()
     }
 
+    /// Table of the 10 most urgent vulnerabilities (by priority rating).
     fn top_table(&mut self, ui: &mut egui::Ui) {
         if self.top.is_empty() {
             ui.add_space(20.0);
@@ -916,6 +936,7 @@ impl VulnTab {
         }
     }
 
+    /// Table of all findings, filterable by severity tile and search text.
     fn findings_table(&mut self, ui: &mut egui::Ui) {
         let rows = self.visible();
         let mut clicked = None;
@@ -989,6 +1010,7 @@ impl VulnTab {
         }
     }
 
+    /// Table of the services found, with detected software and banner.
     fn services_table(&mut self, ui: &mut egui::Ui) {
         let q = self.search.trim().to_ascii_lowercase();
         let mut list: Vec<&Service> = self
@@ -1342,12 +1364,14 @@ impl VulnTab {
     }
 }
 
+/// A titled block of wrapped text in the details panel.
 fn section(ui: &mut egui::Ui, title: &str, text: &str) {
     ui.add_space(10.0);
     ui.label(RichText::new(title).strong());
     copy_value(ui, text, text);
 }
 
+/// CVSS score as shown in the tables ("—" when not scored).
 fn cvss_text(f: &Finding) -> String {
     match &f.cvss {
         Some(c) if c.score > 0.0 => format!("{:.1}", c.score),
@@ -1356,10 +1380,12 @@ fn cvss_text(f: &Finding) -> String {
     }
 }
 
+/// EPSS probability as a percentage ("—" when unknown).
 fn epss_text(f: &Finding) -> String {
     f.epss.map(|e| format!("{:.1}%", e.probability * 100.0)).unwrap_or_else(|| "—".into())
 }
 
+/// Tooltip text for a table column header.
 fn column_help(col: &str) -> &'static str {
     match col {
         "CVSS" => "CVSS base score 0-10 (v4.0 when published, otherwise v3.x)",
@@ -1375,6 +1401,7 @@ fn column_help(col: &str) -> &'static str {
     }
 }
 
+/// Tooltip text for a CVE data source.
 fn cve_help(c: CveSource) -> &'static str {
     match c {
         CveSource::Online => {
@@ -1387,6 +1414,7 @@ fn cve_help(c: CveSource) -> &'static str {
     }
 }
 
+/// Tooltip text for a scan speed.
 fn speed_help(s: Speed) -> &'static str {
     match s {
         Speed::Normal => "Fastest: many probes in parallel. Best for your own home or office network.",

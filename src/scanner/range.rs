@@ -86,10 +86,12 @@ pub fn network_range_text(addr: Ipv4Addr, prefix_len: u8) -> String {
 // helpers
 // ---------------------------------------------------------------------------
 
+/// One IPv4 address, with a readable error.
 fn parse_ip(s: &str) -> Result<Ipv4Addr, String> {
     s.trim().parse::<Ipv4Addr>().map_err(|_| format!("\"{}\" is not a valid IPv4 address.", short(s)))
 }
 
+/// One port number 1–65535, with a readable error.
 fn parse_port(s: &str) -> Result<u16, String> {
     match s.trim().parse::<u16>() {
         Ok(p) if p > 0 => Ok(p),
@@ -106,6 +108,7 @@ fn usable_hosts(addr: u32, prefix: u8) -> (u32, u32) {
     if prefix >= 31 { (network, broadcast) } else { (network + 1, broadcast - 1) }
 }
 
+/// Add every address of `net/prefix` (e.g. 192.168.1.0/24) to the set.
 fn add_cidr(set: &mut BTreeSet<Ipv4Addr>, net: &str, prefix: &str) -> Result<(), String> {
     let base = parse_ip(net)?;
     let prefix: u8 = match prefix.trim().parse() {
@@ -116,6 +119,7 @@ fn add_cidr(set: &mut BTreeSet<Ipv4Addr>, net: &str, prefix: &str) -> Result<(),
     add_span(set, first, last)
 }
 
+/// Add every address from `start` to `end` ("10.0.0.5-10.0.0.20" or "10.0.0.5-20").
 fn add_dash_range(set: &mut BTreeSet<Ipv4Addr>, start: &str, end: &str) -> Result<(), String> {
     let start_ip = parse_ip(start)?;
     // "192.168.1.1-254" → the end is only the last octet.
@@ -142,6 +146,7 @@ fn add_span(set: &mut BTreeSet<Ipv4Addr>, first: u32, last: u32) -> Result<(), S
     Ok(())
 }
 
+/// Error text for ranges over the size limit.
 fn too_many() -> String {
     format!("That range is too big. Proton IP Scanner scans up to {MAX_HOSTS} addresses (a /16) at once.")
 }
